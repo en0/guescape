@@ -1,0 +1,32 @@
+flowchart TB
+    subgraph Authoring
+        YAML["Room YAML"] --> Loader["Loader / Validator"]
+        Loader --> Definition["Room Definition"]
+    end
+
+    subgraph Engine
+        Input["Player Input"] --> Loop["Main Loop"]
+        Loop --> Parser["Parser"]
+        Parser --> Dispatch["Dispatcher"]
+
+        Dispatch -->|Active mode| Mode["Mode Handler"]
+        Dispatch -->|World command| World["World Command Handler"]
+        Dispatch -->|Object command| Type["Object-Type Handler"]
+        Type -->|Pass| Custom["Object-Specific Lua Handler"]
+
+        Mode --> Response["Handler Response"]
+        World --> Response
+        Type --> Response
+        Custom --> Response
+
+        Response --> Apply["Validate and Apply Effects"]
+        Apply --> State["Run State"]
+        Response --> Output["Display Text"]
+    end
+
+    Definition --> State
+    Definition --> Dispatch
+    State -. read-only context .-> Mode
+    State -. read-only context .-> Type
+    State -. read-only context .-> Custom
+    Output --> Player["Player"]

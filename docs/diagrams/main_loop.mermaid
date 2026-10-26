@@ -1,0 +1,43 @@
+sequenceDiagram
+    actor Player
+    participant Main as Main Loop
+    participant Mode as Active Mode
+    participant Dispatch as Dispatcher
+    participant World as World Command
+    participant Type as Object-Type Handler
+    participant Lua as Object-Specific Lua
+    participant State as Run State
+    participant Output
+
+    Player->>Main: Enter command
+
+    alt A mode is active
+        Main->>Mode: Handle input
+        Mode-->>Main: Response
+    else No mode is active
+        Main->>Dispatch: Parse and dispatch input
+
+        alt World-level command
+            Dispatch->>World: Handle command
+            World-->>Dispatch: Response
+        else Object-targeted command
+            Dispatch->>Type: Handle action on object
+            alt Type handles action
+                Type-->>Dispatch: Response
+            else Type passes
+                Dispatch->>Lua: Try custom handler
+                Lua-->>Dispatch: Response
+            end
+        end
+
+        Dispatch-->>Main: Response
+    end
+
+    opt Response contains effects
+        Main->>State: Validate and apply effects
+    end
+
+    opt Response contains text
+        Main->>Output: Display text
+        Output-->>Player: Show response
+    end
