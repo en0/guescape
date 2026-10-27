@@ -1,7 +1,9 @@
 package hcl
 
 import (
-	"github.com/en0/guescape/internal/game"
+	"errors"
+	"fmt"
+
 	"github.com/hashicorp/hcl/v2"
 )
 
@@ -19,13 +21,35 @@ func appendDiagsAs(errs []error, diags hcl.Diagnostics, remap diagMapper) []erro
 	return errs
 }
 
-// TODO: Make these carry the right information
-// Right now we are dropping a ton of details that we want
+var ErrParserError = errors.New("parser error")
+var ErrDecodingError = errors.New("decoding error")
+
+type LoaderError struct{
+	kind error
+	Summary string
+	Detail string
+	Context string
+}
+
+func (e LoaderError) Unwrap() error { return e.kind }
+func (e LoaderError) Error() string {
+	return fmt.Sprintf("%s: %s", e.kind, e.Summary)
+}
 
 func parsingErrorMapper(diag hcl.Diagnostic) error {
-	return game.NewParsingError(diag.Summary)
+	return LoaderError{
+		kind: ErrParserError,
+		Summary: diag.Summary,
+		Detail: diag.Detail,
+		Context: diag.Subject.String(),
+	}
 }
 
 func decodingErrorMapper(diag hcl.Diagnostic) error {
-	return game.NewDecodingError(diag.Summary)
+	return LoaderError{
+		kind: ErrDecodingError,
+		Summary: diag.Summary,
+		Detail: diag.Detail,
+		Context: diag.Subject.String(),
+	}
 }
