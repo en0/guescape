@@ -53,6 +53,8 @@ func (r *Repl) handleAction(act game.Action) {
 			nws, err := game.Apply(ws, e)
 			if err != nil {
 				r.handleError(err)
+				// This is a bug. we could find ourselves in a softlock state. the entire batch
+				// should be discarded, not just the one broken effect.
 				continue
 			}
 			ws = nws
