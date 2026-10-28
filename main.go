@@ -2,6 +2,7 @@ package main
 
 import (
 	"errors"
+	"flag"
 	"fmt"
 	"os"
 
@@ -10,8 +11,15 @@ import (
 )
 
 func main() {
-	// // TODO: obtain hcl from args
-	ws, err := hcl.LoadFile("./docs/example.hcl")
+
+	path := flag.String("path", "", "Path to the hcl file.")
+	flag.Parse()
+	if *path == "" {
+		fmt.Fprintln(os.Stderr, "error: -path is required")
+		os.Exit(2)
+	}
+
+	ws, err := hcl.LoadFile(*path)
 	if err != nil { abort(err, 1) }
 	repl := cli.NewRepl(ws, os.Stdin, os.Stdout)
 	err = repl.Run()
