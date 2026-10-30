@@ -13,6 +13,7 @@ type WorldState struct {
 	zones   		[]Zone
 	objects 		[]Object
 	flags			[]Identity
+	modes 			[]Mode
 	messages		map[MsgKey]string
 }
 
@@ -23,6 +24,7 @@ func NewWorldState(
 	flags		[]Identity,
 	zones 		[]Zone,
 	objects 	[]Object,
+	modes 		[]Mode,
 	messages	map[MsgKey]string,
 ) (WorldState, error) {
 	ws := WorldState{
@@ -31,6 +33,7 @@ func NewWorldState(
 		flags: 			flags,
 		zones: 			zones,
 		objects: 		objects,
+		modes: 			modes,
 		messages:       messages,
 	}
 	if err := validateWorldState(ws); err != nil {
@@ -39,10 +42,20 @@ func NewWorldState(
 	return ws, nil
 }
 
+// Returns the world description
 func (ws WorldState) Description() string {
 	return ws.desc
 }
 
+// Returns the prompt state of the world
+func (ws WorldState) Prompt() PromptView {
+	return PromptView{
+		Text: fmt.Sprintf("%s> ", ws.currentZoneId.String()),
+		ModeActive: false,
+	}
+}
+
+// Returns details about the current zone
 func (ws WorldState) ViewCurrentZone() ZoneView {
 
 	var objects []Identity
@@ -63,6 +76,7 @@ func (ws WorldState) ViewCurrentZone() ZoneView {
 	}
 }
 
+// Returns a list of object ids currently in the player's inventory
 func (ws WorldState) Inventory() []Identity {
 	var result []Identity
 	for _, o := range filter(ws.objects, func(o Object) bool {

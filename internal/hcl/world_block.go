@@ -51,5 +51,6 @@ func (wb worldBlock) toDomain() (game.WorldState, error) {
 		return game.WorldState{}, errors.Join(errs...)
 	}
 
-	return game.NewWorldState(szid, wb.Desc, nil, zones, objects, messages)
+	// TODO: parse and pass in modes
+	return game.NewWorldState(szid, wb.Desc, nil, zones, objects, nil, messages)
 }

@@ -27,7 +27,7 @@ func testRepl(t *testing.T) (Repl, *bytes.Buffer, *bytes.Buffer) {
 			game.NewZone(testIdentity(t, "zone-one"), "zone-one", nil),
 		},
 		[]game.Object{},
-		nil,
+		nil, nil,
 	)
 	if err != nil { t.Fatalf("game.NewWorldState(...) err=%v", err) }
 	in := &bytes.Buffer{}

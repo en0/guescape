@@ -86,3 +86,14 @@ type EndGameEffect struct {
     Text 	string
 }
 func (EndGameEffect) isEffect() {}
+
+// Set an active mode.
+type SetModeEffect struct {
+	/// ModeId is the mode to set.
+	ModeId Identity
+}
+func (SetModeEffect) isEffect() {}
+
+// Clears the active mode.
+type ClearModeEffect struct { }
+func (ClearModeEffect) isEffect() {}

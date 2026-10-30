@@ -39,7 +39,7 @@ func TestNewWorldState(t *testing.T) {
 			startZoneId := testIdentity(t, tt.zone)
 			state, err := NewWorldState(
 				startZoneId, description,
-				nil, tt.zones, tt.objs, nil,
+				nil, tt.zones, tt.objs, nil, nil,
 			)
 			if !tt.check(state, err) {
 				t.Fatalf("Unexpected result: err=%v", err)

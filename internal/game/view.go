@@ -6,3 +6,8 @@ type ZoneView struct {
     Exits   []Identity
     Objects []Identity
 }
+
+type PromptView struct {
+	Text 		string
+	ModeActive	bool
+}

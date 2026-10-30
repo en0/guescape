@@ -5,6 +5,7 @@ type actionType int
 const (
 	navActionType actionType = iota
 	objectActionType
+	modeActionType
 )
 
 // NavCommand is a movement command issued by the player, such as CmdMove
@@ -42,6 +43,9 @@ type Action struct {
 	objectTarget Identity
 	objectHasItem bool
 	objectItem Identity
+
+	// ModeActionType field
+	modeInput []string
 }
 
 // NewNavAction returns a navigation Action for the given command and exit.
@@ -67,5 +71,13 @@ func NewObjectActionWithItem(verb ObjectVerb, objectId Identity, itemId Identity
 		objectTarget: objectId,
 		objectItem: itemId,
 		objectHasItem: true,
+	}
+}
+
+// NewModeAction returns a mode input Action with the given arguments
+func NewModeAction(args ...string) Action {
+	return Action{
+		kind: modeActionType,
+		modeInput: args,
 	}
 }

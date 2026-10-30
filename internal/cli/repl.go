@@ -153,10 +153,15 @@ func (r *Repl) Run() error {
 	r.running = true
 	fmt.Fprintf(r.out, "%s\n", r.ws.Description())
 	for r.running {
-		v := r.ws.ViewCurrentZone()
-		tokens, err := r.prompt(fmt.Sprintf("%s> ", v.Id.String()))
+		pv := r.ws.Prompt()
+		tokens, err := r.prompt(pv.Text)
 		if errors.Is(err, io.EOF) { return nil }
 		if err != nil { return err }
+		if pv.ModeActive {
+			modeAction := game.NewModeAction(tokens...)
+			r.handleAction(modeAction)
+			continue
+		}
 		if len(tokens) == 0 { continue }
 
 		command, err := findCommand(tokens[0])

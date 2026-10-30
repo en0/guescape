@@ -47,7 +47,7 @@ func testWorldState(
 ) WorldState {
 	t.Helper()
 	szid := testIdentity(t, startZoneId)
-	ws, err := NewWorldState(szid, desc, nil, zones, objects, nil)
+	ws, err := NewWorldState(szid, desc, nil, zones, objects, nil, nil)
 	if err != nil {t.Fatalf("NewWorldState(...): %v", err)}
 	return applyTestOptions(ws, opts...)
 }
