@@ -10,6 +10,7 @@ import (
 type WorldState struct {
 	desc	 		string
 	currentZoneId 	Identity
+	currentModeId 	Identity
 	zones   		[]Zone
 	objects 		[]Object
 	flags			[]Identity
@@ -29,6 +30,7 @@ func NewWorldState(
 ) (WorldState, error) {
 	ws := WorldState{
 		currentZoneId: 	startZoneId,
+		currentModeId:  Identity{},
 		desc: 			description,
 		flags: 			flags,
 		zones: 			zones,
@@ -51,7 +53,7 @@ func (ws WorldState) Description() string {
 func (ws WorldState) Prompt() PromptView {
 	return PromptView{
 		Text: fmt.Sprintf("%s> ", ws.currentZoneId.String()),
-		ModeActive: false,
+		ModeActive: ws.currentModeId != Identity{},
 	}
 }
 
@@ -87,6 +89,34 @@ func (ws WorldState) Inventory() []Identity {
 	return result
 }
 
+// Check if the palyer has the given flag
+func (ws WorldState) HasFlag(id Identity) bool {
+	return exists(ws.flags, func(f Identity) bool {
+		return f == id
+	})
+}
+
+// Retrieve, from the given object, the value of the given property.
+func (ws WorldState) ObjectProperty(objId Identity, propertyId Identity) (string, bool) {
+	obj, found := ws.object(objId)
+	if !found {
+		return "", false
+	}
+	return obj.property(propertyId)
+}
+
+// Retrieve, from the given state value from the current mode.
+func (ws WorldState) CurrentModeState(id Identity) (string, bool) {
+	mode, found := ws.currentMode()
+	if !found {
+		return "", false
+	}
+	if v, ok := mode.state[id]; ok {
+		return v, true
+	}
+	return "", false
+}
+
 func (ws WorldState) message(key MsgKey) string {
 	if val, ok := ws.messages[key]; ok { return val }
 	return message(key)
@@ -101,6 +131,20 @@ func (ws WorldState) currentZone() (Zone) {
 func (ws WorldState) zone(id Identity) (Zone, bool) {
 	return find(ws.zones, func(z Zone) bool {
 		return z.id == id
+	})
+}
+
+func (ws WorldState) currentMode() (Mode, bool) {
+	modeId := ws.currentModeId
+	if modeId == (Identity{}) {
+		return Mode{}, false
+	}
+	return ws.mode(modeId)
+}
+
+func (ws WorldState) mode(id Identity) (Mode, bool){
+	return find(ws.modes, func(m Mode) bool {
+		return m.id == id
 	})
 }
 
@@ -127,11 +171,5 @@ func (ws WorldState) hasZone(id Identity) bool {
 func (ws WorldState) hasObject(id Identity) bool {
 	return exists(ws.objects, func(z Object) bool {
 		return z.id == id
-	})
-}
-
-func (ws WorldState) hasFlag(id Identity) bool {
-	return exists(ws.flags, func(f Identity) bool {
-		return f == id
 	})
 }

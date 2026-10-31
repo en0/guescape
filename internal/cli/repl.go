@@ -37,7 +37,9 @@ func NewRepl(ws game.WorldState, in io.Reader, out io.Writer) Repl {
 
 func (r *Repl) handleAction(act game.Action) {
 	var ws = r.ws
-	for _, ef := range game.PlanEffects(ws, act) {
+	effects, _ := game.PlanEffects(ws, act)
+	// TODO: handle error
+	for _, ef := range effects {
 
 		switch e := ef.(type) {
 		case game.SayEffect:

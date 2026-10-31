@@ -70,7 +70,7 @@ func TestApply(t *testing.T) {
 			name: "add-flag-effect-adds-missing-flag",
 			ef: AddFlagEffect{Flag: testIdentity(t, "flag-no-exists")},
 			check: func(ws WorldState, err error) bool {
-				return ws.hasFlag(testIdentity(t, "flag-no-exists"))
+				return ws.HasFlag(testIdentity(t, "flag-no-exists"))
 			},
 		},
 		{
@@ -86,7 +86,7 @@ func TestApply(t *testing.T) {
 			name: "remove-flag-effect-removes-existing-flag",
 			ef: RemoveFlagEffect{Flag: testIdentity(t, "flag-exists")},
 			check: func(ws WorldState, err error) bool {
-				return !ws.hasFlag(testIdentity(t, "flag-exists"))
+				return !ws.HasFlag(testIdentity(t, "flag-exists"))
 			},
 		},
 		{

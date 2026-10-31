@@ -160,3 +160,190 @@ func TestViewCurrentZone(t *testing.T) {
 		})
 	}
 }
+
+func TestPrompt(t *testing.T) {
+	tests := []struct{
+		name string
+		ws WorldState
+		expect PromptView
+	}{
+		{
+			name: "prompt-view-contains-current-zone",
+			ws: testWorldState(t, "zone-one", "zone-one", []Zone{testZone(t, "zone-one")}, nil),
+			expect: PromptView{Text: "zone-one> ", ModeActive: false},
+		},
+		{
+			name: "prompt-view-shows-active-mode",
+			ws: testWorldState(t, "zone-one", "zone-one",
+				[]Zone{testZone(t, "zone-one")},
+				nil,
+				testWithWorldStateModes(t, true, testMode(t, "mode-one")),
+			),
+			expect: PromptView{Text: "zone-one> ", ModeActive: true},
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			actual := tt.ws.Prompt()
+			if !reflect.DeepEqual(actual, tt.expect) {
+				t.Fatalf("ws.Prompt() %v, want %v", actual, tt.expect)
+			}
+		})
+	}
+}
+
+func TestHasFlag(t *testing.T) {
+	tests := []struct{
+		name string
+		flag string
+		expect bool
+		ws WorldState
+	}{
+		{
+			name: "has-flag-returns-true-when-flag-present",
+			flag: "flag-one",
+			expect: true,
+			ws: WorldState{
+				flags: testIdentities(t, "flag-one"),
+			},
+		},
+		{
+			name: "has-flag-returns-false-when-flag-not-present",
+			flag: "flag-one",
+			expect: false,
+			ws: WorldState{},
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			id := testIdentity(t, tt.flag)
+			actual := tt.ws.HasFlag(id)
+			if actual != tt.expect {
+				t.Fatalf("ws.HasFlag(%v) %v, want %v", tt.flag, actual, tt.expect)
+			}
+		})
+	}
+}
+
+func TestObjectProperty(t *testing.T) {
+	tests := []struct{
+		name string
+		obj string
+		property string
+		value string
+		found bool
+		ws WorldState
+	}{
+		{
+			name: "object-property-returns-property-value-when-present",
+			obj: "obj-one",
+			property: "prop-one",
+			value: "prop-one-value",
+			found: true,
+			ws: WorldState{
+				objects: []Object{
+					testObject(t, "obj-one", "zone-one", testWithObjectProperty(t, "prop-one", "prop-one-value")),
+				},
+			},
+		},
+		{
+			name: "object-property-returns-not-oufnd-when-property-not-present",
+			obj: "obj-one",
+			property: "prop-one",
+			value: "",
+			found: false,
+			ws: WorldState{
+				objects: []Object{
+					testObject(t, "obj-one", "zone-one"),
+				},
+			},
+		},
+		{
+			name: "object-property-returns-not-found-when-property-not-present",
+			obj: "obj-one",
+			property: "prop-one",
+			value: "",
+			found: false,
+			ws: WorldState{
+				objects: []Object{
+					testObject(t, "obj-one", "zone-one"),
+				},
+			},
+		},
+		{
+			name: "object-property-returns-not-found-when-object-not-present",
+			obj: "obj-one",
+			property: "prop-one",
+			value: "",
+			found: false,
+			ws: WorldState{},
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			objId := testIdentity(t, tt.obj)
+			propId := testIdentity(t, tt.property)
+			actual, found := tt.ws.ObjectProperty(objId, propId)
+			if found != tt.found || actual != tt.value {
+				t.Fatalf("ws.ObjectProperty(%v, %v) (%v, %v) want (%v, %v)", tt.obj, tt.property, actual, found, tt.value, tt.found)
+			}
+		})
+	}
+}
+
+func TestCurrentModeState(t *testing.T) {
+	tests := []struct{
+		name string
+		state string
+		value string
+		found bool
+		ws WorldState
+	}{
+		{
+			name: "current-mode-state-returns-state-value-when-present",
+			state: "state-one",
+			value: "state-one-value",
+			found: true,
+			ws: WorldState{
+				currentModeId: testIdentity(t, "mode-one"),
+				modes: []Mode{
+					testMode(t, "mode-one", testWithModeState(t, "state-one", "state-one-value")),
+				},
+			},
+		},
+		{
+			name: "current-mode-state-returns-not-found-when-state-not-present",
+			state: "state-one",
+			found: false,
+			ws: WorldState{
+				currentModeId: testIdentity(t, "mode-one"),
+				modes: []Mode{
+					testMode(t, "mode-one"),
+				},
+			},
+		},
+		{
+			name: "current-mode-state-returns-not-found-when-mode-not-present",
+			state: "state-one",
+			found: false,
+			ws: WorldState{
+				currentModeId: testIdentity(t, "mode-one"),
+			},
+		},
+		{
+			name: "current-mode-state-returns-not-found-when-mode-not-set",
+			state: "state-one",
+			found: false,
+			ws: WorldState{},
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			id := testIdentity(t, tt.state)
+			actual, found := tt.ws.CurrentModeState(id)
+			if found != tt.found || actual != tt.value {
+				t.Fatalf("ws.CurrentModeState(%v) (%v, %v) want (%v, %v)", tt.state, actual, found, tt.value, tt.found)
+			}
+		})
+	}
+}

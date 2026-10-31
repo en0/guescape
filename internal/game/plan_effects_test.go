@@ -1,6 +1,8 @@
 package game
 
 import (
+	"errors"
+	"fmt"
 	"slices"
 	"testing"
 )
@@ -9,16 +11,20 @@ type effectCase struct {
 	name string
 	state WorldState
 	action Action
-	expected []Effect
+	expect []Effect
+	expectErr error
 }
 
-func runEffectCases(t *testing.T, fn func(WorldState, Action) []Effect, tests []effectCase) {
+func runEffectCases(t *testing.T, fn func(WorldState, Action) ([]Effect, error), tests []effectCase) {
 	t.Helper()
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			actual := fn(tt.state, tt.action)
-			if !slices.Equal(tt.expected, actual) {
-				t.Errorf("effect types = %v want %v", actual, tt.expected)
+			actual, err := fn(tt.state, tt.action)
+			if !errors.Is(err, tt.expectErr) {
+				t.Errorf("effect types err = %v want %v", err, tt.expectErr)
+			}
+			if !slices.Equal(tt.expect, actual) {
+				t.Errorf("effect types = %v want %v", actual, tt.expect)
 			}
 		})
 	}
@@ -36,7 +42,7 @@ func TestPlanEffects(t *testing.T) {
 				},
 			},
 			action: NewNavAction(CmdMove, testIdentity(t, "zone-exit")),
-			expected: []Effect{CurrentZoneEffect{testIdentity(t, "zone-two")}},
+			expect: []Effect{CurrentZoneEffect{testIdentity(t, "zone-two")}},
 		}, {
 			name: "move-zone-has-flags",
 			state: WorldState{
@@ -48,7 +54,7 @@ func TestPlanEffects(t *testing.T) {
 				},
 			},
 			action: NewNavAction(CmdMove, testIdentity(t, "zone-exit")),
-			expected: []Effect{CurrentZoneEffect{testIdentity(t, "zone-two")}},
+			expect: []Effect{CurrentZoneEffect{testIdentity(t, "zone-two")}},
 		}, {
 			name: "move-zone-missing-flags",
 			state: WorldState{
@@ -59,7 +65,7 @@ func TestPlanEffects(t *testing.T) {
 				},
 			},
 			action: NewNavAction(CmdMove, testIdentity(t, "zone-exit")),
-			expected: []Effect{SayEffect{msgDefaults[MsgWayBlocked]}},
+			expect: []Effect{SayEffect{msgDefaults[MsgWayBlocked]}},
 		}, {
 			name: "move-zone-missing-flags-custom-message",
 			state: WorldState{
@@ -71,7 +77,7 @@ func TestPlanEffects(t *testing.T) {
 				},
 			},
 			action: NewNavAction(CmdMove, testIdentity(t, "zone-exit")),
-			expected: []Effect{SayEffect{"way-blocked"}},
+			expect: []Effect{SayEffect{"way-blocked"}},
 		}, {
 			name: "move-no-exit",
 			state: WorldState{
@@ -79,7 +85,7 @@ func TestPlanEffects(t *testing.T) {
 				zones: []Zone{testZone(t, "zone-one"), testZone(t, "zone-two")},
 			},
 			action: NewNavAction(CmdMove, testIdentity(t, "zone-exit")),
-			expected: []Effect{SayEffect{msgDefaults[MsgCannotMove]}},
+			expect: []Effect{SayEffect{msgDefaults[MsgCannotMove]}},
 		}, {
 			name: "move-bad-zone",
 			state: WorldState{
@@ -89,7 +95,7 @@ func TestPlanEffects(t *testing.T) {
 				},
 			},
 			action: NewNavAction(CmdMove, testIdentity(t, "zone-exit")),
-			expected: []Effect{SayEffect{msgDefaults[MsgDestinationMissing]}},
+			expect: []Effect{SayEffect{msgDefaults[MsgDestinationMissing]}},
 		}, {
 			name: "examine-object",
 			state: WorldState{
@@ -98,7 +104,7 @@ func TestPlanEffects(t *testing.T) {
 				objects: []Object{testObject(t, "object-one", "zone-one")},
 			},
 			action: NewObjectAction(VerbExamine, testIdentity(t, "object-one")),
-			expected: []Effect{SayEffect{"object-one"}},
+			expect: []Effect{SayEffect{"object-one"}},
 		}, {
 			name: "examine-object-not-found",
 			state: WorldState{
@@ -106,7 +112,7 @@ func TestPlanEffects(t *testing.T) {
 				zones: []Zone{testZone(t, "zone-one")},
 			},
 			action: NewObjectAction(VerbExamine, testIdentity(t, "object-one")),
-			expected: []Effect{SayEffect{msgDefaults[MsgObjectNotFound]}},
+			expect: []Effect{SayEffect{msgDefaults[MsgObjectNotFound]}},
 		}, {
 			name: "examine-object-not-found-custom-message",
 			state: WorldState{
@@ -116,7 +122,7 @@ func TestPlanEffects(t *testing.T) {
 				messages: map[MsgKey]string{MsgObjectNotFound: "not-found"},
 			},
 			action: NewObjectAction(VerbExamine, testIdentity(t, "object-one")),
-			expected: []Effect{SayEffect{"not-found"}},
+			expect: []Effect{SayEffect{"not-found"}},
 		}, {
 			name: "examine-object-in-inventory",
 			state: WorldState{
@@ -128,7 +134,7 @@ func TestPlanEffects(t *testing.T) {
 				messages: map[MsgKey]string{MsgObjectNotFound: "not-found"},
 			},
 			action: NewObjectAction(VerbExamine, testIdentity(t, "object-one")),
-			expected: []Effect{SayEffect{"object-one"}},
+			expect: []Effect{SayEffect{"object-one"}},
 		}, {
 			name: "take-object",
 			state: WorldState{
@@ -139,7 +145,7 @@ func TestPlanEffects(t *testing.T) {
 				},
 			},
 			action: NewObjectAction(VerbTake, testIdentity(t, "object-one")),
-			expected: []Effect{ObjectLocationEffect{
+			expect: []Effect{ObjectLocationEffect{
 				ObjectId: testIdentity(t, "object-one"),
 				ZoneId: InventoryZoneId,
 			}},
@@ -150,7 +156,7 @@ func TestPlanEffects(t *testing.T) {
 				zones: []Zone{testZone(t, "zone-one")},
 			},
 			action: NewObjectAction(VerbTake, testIdentity(t, "object-one")),
-			expected: []Effect{SayEffect{msgDefaults[MsgObjectNotFound]}},
+			expect: []Effect{SayEffect{msgDefaults[MsgObjectNotFound]}},
 		}, {
 			name: "take-object-already-taken",
 			state: WorldState{
@@ -161,7 +167,7 @@ func TestPlanEffects(t *testing.T) {
 				},
 			},
 			action: NewObjectAction(VerbTake, testIdentity(t, "object-one")),
-			expected: []Effect{SayEffect{msgDefaults[MsgObjectAlreadyTaken]}},
+			expect: []Effect{SayEffect{msgDefaults[MsgObjectAlreadyTaken]}},
 		}, {
 			name: "take-object-not-carriable",
 			state: WorldState{
@@ -172,7 +178,7 @@ func TestPlanEffects(t *testing.T) {
 				},
 			},
 			action: NewObjectAction(VerbTake, testIdentity(t, "object-one")),
-			expected: []Effect{SayEffect{msgDefaults[MsgObjectNotCarriable]}},
+			expect: []Effect{SayEffect{msgDefaults[MsgObjectNotCarriable]}},
 		}, {
 			name: "drop-object",
 			state: WorldState{
@@ -183,7 +189,7 @@ func TestPlanEffects(t *testing.T) {
 				},
 			},
 			action: NewObjectAction(VerbDrop, testIdentity(t, "object-one")),
-			expected: []Effect{ObjectLocationEffect{
+			expect: []Effect{ObjectLocationEffect{
 				ObjectId: testIdentity(t, "object-one"),
 				ZoneId: testIdentity(t, "zone-one"),
 			}},
@@ -194,7 +200,7 @@ func TestPlanEffects(t *testing.T) {
 				zones: []Zone{testZone(t, "zone-one")},
 			},
 			action: NewObjectAction(VerbDrop, testIdentity(t, "object-one")),
-			expected: []Effect{SayEffect{msgDefaults[MsgObjectNotFound]}},
+			expect: []Effect{SayEffect{msgDefaults[MsgObjectNotFound]}},
 		}, {
 			name: "drop-object-not-in-inventory",
 			state: WorldState{
@@ -205,7 +211,7 @@ func TestPlanEffects(t *testing.T) {
 				},
 			},
 			action: NewObjectAction(VerbDrop, testIdentity(t, "object-one")),
-			expected: []Effect{SayEffect{msgDefaults[MsgObjectNotTaken]}},
+			expect: []Effect{SayEffect{msgDefaults[MsgObjectNotTaken]}},
 		}, {
 			name: "use-object",
 			state: WorldState{
@@ -216,7 +222,7 @@ func TestPlanEffects(t *testing.T) {
 				},
 			},
 			action: NewObjectAction(VerbUse, testIdentity(t, "object-one")),
-			expected: []Effect{SayEffect{msgDefaults[MsgObjectNotUsable]}},
+			expect: []Effect{SayEffect{msgDefaults[MsgObjectNotUsable]}},
 		}, {
 			name: "use-object-not-found",
 			state: WorldState{
@@ -224,7 +230,7 @@ func TestPlanEffects(t *testing.T) {
 				zones: []Zone{testZone(t, "zone-one")},
 			},
 			action: NewObjectAction(VerbUse, testIdentity(t, "object-one")),
-			expected: []Effect{SayEffect{msgDefaults[MsgObjectNotFound]}},
+			expect: []Effect{SayEffect{msgDefaults[MsgObjectNotFound]}},
 		}, {
 			name: "use-object-with-item-not-found",
 			state: WorldState{
@@ -239,7 +245,7 @@ func TestPlanEffects(t *testing.T) {
 				testIdentity(t, "object-one"),
 				testIdentity(t, "object-two"),
 			),
-			expected: []Effect{SayEffect{msgDefaults[MsgItemNotFound]}},
+			expect: []Effect{SayEffect{msgDefaults[MsgItemNotFound]}},
 		}, {
 			name: "use-object-with-item-no-handler",
 			state: WorldState{
@@ -255,7 +261,7 @@ func TestPlanEffects(t *testing.T) {
 				testIdentity(t, "object-one"),
 				testIdentity(t, "object-two"),
 			),
-			expected: []Effect{SayEffect{msgDefaults[MsgNoHandler]}},
+			expect: []Effect{SayEffect{msgDefaults[MsgNoHandler]}},
 		}, {
 			name: "custom-use",
 			state: WorldState{
@@ -268,7 +274,7 @@ func TestPlanEffects(t *testing.T) {
 				},
 			},
 			action: NewObjectAction(VerbUse, testIdentity(t, "object-one")),
-			expected: []Effect{SayEffect{"custom-action"}},
+			expect: []Effect{SayEffect{"custom-action"}},
 		}, {
 			name: "custom-use-with-flag-condition-unmet",
 			state: WorldState{
@@ -286,7 +292,7 @@ func TestPlanEffects(t *testing.T) {
 				},
 			},
 			action: NewObjectAction(VerbUse, testIdentity(t, "object-one")),
-			expected: []Effect{SayEffect{msgDefaults[MsgNoHandler]}},
+			expect: []Effect{SayEffect{msgDefaults[MsgNoHandler]}},
 		}, {
 			name: "custom-use-with-flag-condition-met",
 			state: WorldState{
@@ -305,7 +311,7 @@ func TestPlanEffects(t *testing.T) {
 				},
 			},
 			action: NewObjectAction(VerbUse, testIdentity(t, "object-one")),
-			expected: []Effect{SayEffect{"flag-present"}},
+			expect: []Effect{SayEffect{"flag-present"}},
 		}, {
 			name: "custom-use-with-property-condition-unmet",
 			state: WorldState{
@@ -323,7 +329,7 @@ func TestPlanEffects(t *testing.T) {
 				},
 			},
 			action: NewObjectAction(VerbUse, testIdentity(t, "object-one")),
-			expected: []Effect{SayEffect{msgDefaults[MsgNoHandler]}},
+			expect: []Effect{SayEffect{msgDefaults[MsgNoHandler]}},
 		}, {
 			name: "custom-use-with-property-condition-met",
 			state: WorldState{
@@ -345,7 +351,7 @@ func TestPlanEffects(t *testing.T) {
 				},
 			},
 			action: NewObjectAction(VerbUse, testIdentity(t, "object-one")),
-			expected: []Effect{SayEffect{"has-property-foo"}},
+			expect: []Effect{SayEffect{"has-property-foo"}},
 		}, {
 			name: "custom-use-with-item-condition-unmet",
 			state: WorldState{
@@ -364,7 +370,7 @@ func TestPlanEffects(t *testing.T) {
 				},
 			},
 			action: NewObjectActionWithItem(VerbUse, testIdentity(t, "object-one"), testIdentity(t, "item-one")),
-			expected: []Effect{SayEffect{msgDefaults[MsgNoHandler]}},
+			expect: []Effect{SayEffect{msgDefaults[MsgNoHandler]}},
 		}, {
 			name: "custom-use-with-item-condition-met",
 			state: WorldState{
@@ -383,7 +389,7 @@ func TestPlanEffects(t *testing.T) {
 				},
 			},
 			action: NewObjectActionWithItem(VerbUse, testIdentity(t, "object-one"), testIdentity(t, "item-one")),
-			expected: []Effect{SayEffect{"has-item-one"}},
+			expect: []Effect{SayEffect{"has-item-one"}},
 		}, {
 			name: "custom-use-with-multiple-condition-met",
 			state: WorldState{
@@ -416,7 +422,41 @@ func TestPlanEffects(t *testing.T) {
 				},
 			},
 			action: NewObjectActionWithItem(VerbUse, testIdentity(t, "object-one"), testIdentity(t, "item-one")),
-			expected: []Effect{SayEffect{"has-all-the-things"}},
+			expect: []Effect{SayEffect{"has-all-the-things"}},
+		},
+		{
+			name: "mode-action-runs-current-mode-script",
+			state: WorldState{
+				currentZoneId: testIdentity(t, "zone-one"),
+				currentModeId: testIdentity(t, "mode-one"),
+				zones: []Zone{testZone(t, "zone-one")},
+				modes: []Mode{
+					testMode(t, "mode-one", testWithModeScriptReturn(
+						[]Effect{SayEffect{Text: "foo"}},
+					)),
+				},
+			},
+			action: NewModeAction("a"),
+			expect: []Effect{SayEffect{"foo"}},
+		},
+		{
+			name: "mode-action-returns-script-error",
+			state: WorldState{
+				currentZoneId: testIdentity(t, "zone-one"),
+				currentModeId: testIdentity(t, "mode-one"),
+				zones: []Zone{testZone(t, "zone-one")},
+				modes: []Mode{
+					testMode(t, "mode-one", testWithModeScriptError(fmt.Errorf("some error"))),
+				},
+			},
+			action: NewModeAction("a"),
+			expectErr: ErrModeFailure,
+		},
+		{
+			name: "mode-action-returns-empty-effect-if-mode-not-set",
+			state: WorldState{},
+			action: NewModeAction("a"),
+			expect: []Effect{},
 		},
 	})
 }

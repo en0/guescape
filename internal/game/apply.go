@@ -34,7 +34,7 @@ func Apply(ws WorldState, ef Effect) (WorldState, error){
 }
 
 func applyAddFlagEffect(ws WorldState, e AddFlagEffect) WorldState {
-	if !ws.hasFlag(e.Flag) {
+	if !ws.HasFlag(e.Flag) {
 		ws.flags = append(ws.flags, e.Flag)
 	}
 	return ws

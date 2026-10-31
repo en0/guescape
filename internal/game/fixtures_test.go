@@ -60,6 +60,19 @@ func testWithWorldStateFlag(t *testing.T, flagId string) testOption[WorldState] 
 	}
 }
 
+func testWithWorldStateModes(t *testing.T, activateFirst bool, modes ...Mode) testOption[WorldState] {
+	t.Helper()
+	if activateFirst && len(modes) == 0 {
+		t.Fatalf("mode activation impossible, no modes exist")
+	}
+	return func(ws *WorldState) {
+		if activateFirst {
+			ws.currentModeId = modes[0].id
+		}
+		ws.modes = append(ws.modes, modes...)
+	}
+}
+
 // Object
 
 func testObject(t *testing.T, id string, zoneId string, opts ...testOption[Object]) Object {
@@ -159,4 +172,56 @@ func testWithFlagCondition(t *testing.T, flag string, value bool) testOption[Con
 	return func(cg *ConditionGroup) {
 		cg.flags = append(cg.flags, NewFlagCondition(id, value))
 	}
+}
+
+// Modes
+
+func testMode(t *testing.T, id string, opts ...testOption[Mode]) Mode {
+	t.Helper()
+	return applyTestOptions(NewMode(
+		testIdentity(t, id),
+		"",
+		nil,
+		nil,
+	), opts...)
+}
+
+func testWithModePrompt(p string) testOption[Mode] {
+	return func(m *Mode) {m.prompt = p}
+}
+
+func testWithModeState(t *testing.T, k string, v string) testOption[Mode] {
+	return func(m *Mode) {
+		key := testIdentity(t, k)
+		if m.state == nil {
+			m.state = make(map[Identity]string)
+		}
+		m.state[key] = v
+	}
+}
+
+func testWithModeScriptReturn(effects []Effect) testOption[Mode] {
+	return func(m *Mode) {
+		m.script = testCompiledScriptMock{
+			effects: effects,
+			err: nil,
+		}
+	}
+}
+
+func testWithModeScriptError(err error) testOption[Mode] {
+	return func(m *Mode) {
+		m.script = testCompiledScriptMock{
+			err: err,
+		}
+	}
+}
+
+type testCompiledScriptMock struct {
+	effects []Effect
+	err error
+}
+
+func (s testCompiledScriptMock) Run(ctx ScriptContext, args []string) ([]Effect, error) {
+	return s.effects, s.err
 }

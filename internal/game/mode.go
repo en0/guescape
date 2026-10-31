@@ -3,15 +3,15 @@ package game
 type Mode struct{
 	id 			Identity
 	prompt 		string
-	properties 	map[Identity]string
-	script 		string
+	state 		map[Identity]string
+	script 		CompiledScript
 }
 
-func NewMode(id Identity, prompt string, properties map[Identity]string, script string) Mode {
+func NewMode(id Identity, prompt string, state map[Identity]string, script CompiledScript) Mode {
 	return Mode{
 		id: id,
 		prompt: prompt,
-		properties: properties,
+		state: state,
 		script: script,
 	}
 }

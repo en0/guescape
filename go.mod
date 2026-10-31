@@ -2,7 +2,11 @@ module github.com/en0/guescape
 
 go 1.27.1
 
-require github.com/hashicorp/hcl/v2 v2.25.0
+require (
+	github.com/hashicorp/hcl/v2 v2.25.0
+	github.com/yuin/gopher-lua v1.1.2
+	golang.org/x/text v0.31.0
+)
 
 require (
 	github.com/agext/levenshtein v1.2.1 // indirect
@@ -13,6 +17,5 @@ require (
 	github.com/zclconf/go-cty v1.19.0 // indirect
 	golang.org/x/mod v0.29.0 // indirect
 	golang.org/x/sync v0.18.0 // indirect
-	golang.org/x/text v0.31.0 // indirect
 	golang.org/x/tools v0.38.0 // indirect
 )

@@ -1,14 +1,23 @@
 package game
 
+import (
+	"errors"
+	"fmt"
+)
+
+var ErrModeFailure = errors.New("mode script failure")
+
 // PlanEffects returns the effects produced by applying act to ws.
-func PlanEffects(ws WorldState, act Action) []Effect {
+func PlanEffects(ws WorldState, act Action) ([]Effect, error) {
 	switch act.kind {
 	case navActionType:
-		return planNavEffects(ws, act)
+		return planNavEffects(ws, act), nil
 	case objectActionType:
-		return planObjectEffects(ws, act)
+		return planObjectEffects(ws, act), nil
+	case modeActionType:
+		return planModeEffects(ws, act)
 	}
-	return []Effect{}
+	return []Effect{}, nil
 }
 
 func planNavEffects(ws WorldState, act Action) []Effect {
@@ -57,6 +66,18 @@ func planObjectEffects(ws WorldState, act Action) []Effect {
 	return sayMessage(ws, MsgNoHandler)
 }
 
+func planModeEffects(ws WorldState, act Action) ([]Effect, error) {
+	mode, found := ws.currentMode()
+	if !found {
+		return nil, nil
+	}
+	effects, err := mode.script.Run(ws, act.modeInput)
+	if err != nil {
+		return nil, fmt.Errorf("%w: plan %q: %v", ErrModeFailure, mode.id.String(), err)
+	}
+	return effects, nil
+}
+
 func planMoveEffects(ws WorldState, act Action) []Effect {
 
 	currentZone := ws.currentZone()
@@ -66,7 +87,7 @@ func planMoveEffects(ws WorldState, act Action) []Effect {
 	 	return sayMessage(ws, MsgCannotMove)
 	}
 
-	if !existsAll(exit.flags, func(flag Identity) bool {return ws.hasFlag(flag)}) {
+	if !existsAll(exit.flags, func(flag Identity) bool {return ws.HasFlag(flag)}) {
 		return sayMessage(ws, MsgWayBlocked)
 	}
 

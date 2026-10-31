@@ -49,7 +49,7 @@ func (cg ConditionGroup) matches(ws WorldState, obj Object, itemId Identity) boo
 		return ok && p == pc.value
 	})
 	allFlags := existsAll(cg.flags, func(fc FlagCondition) bool {
-		return ws.hasFlag(fc.id) == fc.value
+		return ws.HasFlag(fc.id) == fc.value
 	})
 	return cg.useWith == itemId && allProperties && allFlags
 }
