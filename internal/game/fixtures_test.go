@@ -71,10 +71,6 @@ func testObject(t *testing.T, id string, zoneId string, opts ...testOption[Objec
 	), opts...)
 }
 
-func testWithObjectDesc(d string) testOption[Object] {
-	return func(o *Object) {o.desc = d}
-}
-
 func testWithObjectVisibility(v bool) testOption[Object] {
 	return func(o *Object) {o.visible = v}
 }

@@ -7,7 +7,6 @@ type Mode struct{
 	script 		string
 }
 
-
 func NewMode(id Identity, prompt string, properties map[Identity]string, script string) Mode {
 	return Mode{
 		id: id,
