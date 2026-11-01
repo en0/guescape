@@ -179,7 +179,16 @@ func TestPrompt(t *testing.T) {
 				nil,
 				testWithWorldStateModes(t, true, testMode(t, "mode-one")),
 			),
-			expect: PromptView{Text: "zone-one> ", ModeActive: true},
+			expect: PromptView{Text: "", ModeActive: true},
+		},
+		{
+			name: "prompt-view-contains-mode-prompt",
+			ws: testWorldState(t, "zone-one", "zone-one",
+				[]Zone{testZone(t, "zone-one")},
+				nil,
+				testWithWorldStateModes(t, true, testMode(t, "mode-one", testWithModePrompt("test-one"))),
+			),
+			expect: PromptView{Text: "test-one", ModeActive: true},
 		},
 	}
 	for _, tt := range tests {
@@ -247,7 +256,7 @@ func TestObjectProperty(t *testing.T) {
 			},
 		},
 		{
-			name: "object-property-returns-not-oufnd-when-property-not-present",
+			name: "object-property-returns-not-found-when-property-not-present",
 			obj: "obj-one",
 			property: "prop-one",
 			value: "",
@@ -340,7 +349,7 @@ func TestCurrentModeState(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			id := testIdentity(t, tt.state)
-			actual, found := tt.ws.CurrentModeState(id)
+			actual, found := tt.ws.ModeState(tt.ws.currentModeId, id)
 			if found != tt.found || actual != tt.value {
 				t.Fatalf("ws.CurrentModeState(%v) (%v, %v) want (%v, %v)", tt.state, actual, found, tt.value, tt.found)
 			}

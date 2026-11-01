@@ -37,8 +37,8 @@ func NewRepl(ws game.WorldState, in io.Reader, out io.Writer) Repl {
 
 func (r *Repl) handleAction(act game.Action) {
 	var ws = r.ws
-	effects, _ := game.PlanEffects(ws, act)
-	// TODO: handle error
+	effects, err := game.PlanEffects(ws, act)
+	if err != nil { r.handleError(err); return }
 	for _, ef := range effects {
 
 		switch e := ef.(type) {
@@ -54,10 +54,8 @@ func (r *Repl) handleAction(act game.Action) {
 		default:
 			nws, err := game.Apply(ws, e)
 			if err != nil {
-				r.handleError(err)
-				// This is a bug. we could find ourselves in a softlock state. the entire batch
-				// should be discarded, not just the one broken effect.
-				continue
+				r.handleError(fmt.Errorf("this story has a hiccup: %w", err))
+				return
 			}
 			ws = nws
 		}

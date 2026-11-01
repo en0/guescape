@@ -193,10 +193,10 @@ func testWithModePrompt(p string) testOption[Mode] {
 func testWithModeState(t *testing.T, k string, v string) testOption[Mode] {
 	return func(m *Mode) {
 		key := testIdentity(t, k)
-		if m.state == nil {
-			m.state = make(map[Identity]string)
+		if m.states == nil {
+			m.states = make(map[Identity]string)
 		}
-		m.state[key] = v
+		m.states[key] = v
 	}
 }
 

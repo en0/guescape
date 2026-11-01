@@ -2,12 +2,15 @@ package game
 
 import (
 	"errors"
+	"fmt"
 	"maps"
 	"slices"
 )
 
 var errEffectObjectNotFound = errors.New("effect references an unknown object")
 var errEffectPropertyNotFound = errors.New("effect references an unknown property")
+var errEffectModeNotFound = errors.New("effect references an unknown mode")
+var errEffectStateNotFound = errors.New("effect references an unknown state")
 
 // Apply returns a new WorldState with ef applied to ws, leaving ws unchanged.
 // SayEffect and EndGameEffect are no-ops. On error, discard the returned state.
@@ -26,8 +29,18 @@ func Apply(ws WorldState, ef Effect) (WorldState, error){
 		ws, err = applyObjectVisibleEffect(ws, e)
 	case ObjectTargetableEffect:
 		ws, err = applyObjectTargetableEffect(ws, e)
+	case ObjectCarriableEffect:
+		ws, err = applyObjectCarriableEffect(ws, e)
 	case ObjectLocationEffect:
 		ws, err = applyObjectLocationEffect(ws, e)
+	case SetModeEffect:
+		ws.currentModeId = e.ModeId
+	case ClearModeEffect:
+		ws.currentModeId = Identity{}
+	case SetModeStateEffect:
+		ws, err = applySetModeStateEffect(ws, e)
+	case SetModePromptEffect:
+		ws, err = applySetModePromptEffect(ws, e)
 	}
 	if err != nil {return WorldState{}, err}
 	return ws, nil
@@ -57,9 +70,9 @@ func applyObjectPropertyEffect(ws WorldState, e ObjectPropertyEffect) (WorldStat
 			ws.objects = objects
 			return ws, nil
 		}
-		return WorldState{}, errEffectPropertyNotFound
+		return WorldState{}, fmt.Errorf("%w: %v", errEffectPropertyNotFound, e.PropertyId)
 	}
-	return WorldState{}, errEffectObjectNotFound
+	return WorldState{}, fmt.Errorf("%w: %v", errEffectObjectNotFound, e.ObjectId)
 }
 
 func applyObjectVisibleEffect(ws WorldState, e ObjectVisibleEffect) (WorldState, error) {
@@ -68,7 +81,7 @@ func applyObjectVisibleEffect(ws WorldState, e ObjectVisibleEffect) (WorldState,
 	}) {
 		return ws, nil
 	}
-	return WorldState{}, errEffectObjectNotFound
+	return WorldState{}, fmt.Errorf("%w: %v", errEffectObjectNotFound, e.ObjectId)
 }
 
 func applyObjectTargetableEffect(ws WorldState, e ObjectTargetableEffect) (WorldState, error) {
@@ -77,7 +90,16 @@ func applyObjectTargetableEffect(ws WorldState, e ObjectTargetableEffect) (World
 	}) {
 		return ws, nil
 	}
-	return WorldState{}, errEffectObjectNotFound
+	return WorldState{}, fmt.Errorf("%w: %v", errEffectObjectNotFound, e.ObjectId)
+}
+
+func applyObjectCarriableEffect(ws WorldState, e ObjectCarriableEffect) (WorldState, error) {
+	if updateObject(&ws, e.ObjectId, func(o *Object) {
+		o.carriable = e.Carriable
+	}) {
+		return ws, nil
+	}
+	return WorldState{}, fmt.Errorf("%w: %v", errEffectObjectNotFound, e.ObjectId)
 }
 
 func applyObjectLocationEffect(ws WorldState, e ObjectLocationEffect) (WorldState, error) {
@@ -86,7 +108,7 @@ func applyObjectLocationEffect(ws WorldState, e ObjectLocationEffect) (WorldStat
 	}) {
 		return ws, nil
 	}
-	return WorldState{}, errEffectObjectNotFound
+	return WorldState{}, fmt.Errorf("%w: %v", errEffectObjectNotFound, e.ObjectId)
 }
 
 // Updates an object using a clone-on-write strategy to avoid mutating the WorldState.
@@ -96,4 +118,30 @@ func updateObject(ws *WorldState, id Identity, edit func(*Object)) bool {
 	ws.objects = slices.Clone(ws.objects)
 	edit(&ws.objects[i])
 	return true
+}
+
+func applySetModeStateEffect(ws WorldState, e SetModeStateEffect) (WorldState, error) {
+	i := slices.IndexFunc(ws.modes, func(m Mode) bool {return m.id == e.ModeId})
+	if i > -1 {
+		modes := slices.Clone(ws.modes)
+		if modes[i].hasState(e.State) {
+			modes[i].states = maps.Clone(modes[i].states)
+			modes[i].states[e.State] = e.Value
+			ws.modes = modes
+			return ws, nil
+		}
+		return WorldState{}, fmt.Errorf("%w: %v", errEffectStateNotFound, e.State.String())
+	}
+	return WorldState{}, fmt.Errorf("%w: %v", errEffectModeNotFound, e.ModeId)
+}
+
+func applySetModePromptEffect(ws WorldState, e SetModePromptEffect) (WorldState, error) {
+	i := slices.IndexFunc(ws.modes, func(m Mode) bool {return m.id == e.ModeId})
+	if i > -1 {
+		modes := slices.Clone(ws.modes)
+		modes[i].prompt = e.Value
+		ws.modes = modes
+		return ws, nil
+	}
+	return WorldState{}, fmt.Errorf("%w, %v", errEffectModeNotFound, e.ModeId)
 }

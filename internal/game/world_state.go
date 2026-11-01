@@ -51,10 +51,14 @@ func (ws WorldState) Description() string {
 
 // Returns the prompt state of the world
 func (ws WorldState) Prompt() PromptView {
-	return PromptView{
-		Text: fmt.Sprintf("%s> ", ws.currentZoneId.String()),
-		ModeActive: ws.currentModeId != Identity{},
+	var prompt string
+	modeActive := ws.currentModeId != Identity{}
+	if p, ok := ws.mode(ws.currentModeId); ok && modeActive {
+		prompt = p.prompt
+	} else {
+		prompt = fmt.Sprintf("%s> ", ws.currentZoneId.String())
 	}
+	return PromptView{ Text: prompt, ModeActive: modeActive }
 }
 
 // Returns details about the current zone
@@ -89,7 +93,7 @@ func (ws WorldState) Inventory() []Identity {
 	return result
 }
 
-// Check if the palyer has the given flag
+// Check if the player has the given flag
 func (ws WorldState) HasFlag(id Identity) bool {
 	return exists(ws.flags, func(f Identity) bool {
 		return f == id
@@ -105,16 +109,18 @@ func (ws WorldState) ObjectProperty(objId Identity, propertyId Identity) (string
 	return obj.property(propertyId)
 }
 
-// Retrieve, from the given state value from the current mode.
-func (ws WorldState) CurrentModeState(id Identity) (string, bool) {
-	mode, found := ws.currentMode()
-	if !found {
-		return "", false
-	}
-	if v, ok := mode.state[id]; ok {
+// Retrieve, from the given mode, the value of the given state.
+func (ws WorldState) ModeState(modeId Identity, state Identity) (string, bool) {
+	mode, found := ws.mode(modeId)
+	if !found { return "", false }
+	if v, ok := mode.states[state]; ok {
 		return v, true
 	}
 	return "", false
+}
+
+func (ws WorldState) CurrentModeId() Identity {
+	return ws.currentModeId
 }
 
 func (ws WorldState) message(key MsgKey) string {
@@ -171,5 +177,11 @@ func (ws WorldState) hasZone(id Identity) bool {
 func (ws WorldState) hasObject(id Identity) bool {
 	return exists(ws.objects, func(z Object) bool {
 		return z.id == id
+	})
+}
+
+func (ws WorldState) hasMode(id Identity) bool {
+	return exists(ws.modes, func(m Mode) bool {
+		return m.id == id
 	})
 }

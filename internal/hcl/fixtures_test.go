@@ -1,6 +1,10 @@
 package hcl
 
-import "testing"
+import (
+	"testing"
+
+	"github.com/en0/guescape/internal/game"
+)
 
 type testOptions[T any] func(*T)
 
@@ -145,4 +149,16 @@ func withUseCondition(item string) testOptions[conditionGroupBlock] {
 func testWhenBlock(t *testing.T, opts ...testOptions[conditionGroupBlock]) conditionGroupBlock {
 	t.Helper()
 	return applyTestOptions(conditionGroupBlock{}, opts...)
+}
+
+func testLuaCompiler() (func(string) (game.CompiledScript, error)) {
+	return func(s string) (game.CompiledScript, error) {
+		return mockCompiledScript{}, nil
+	}
+}
+
+type mockCompiledScript struct { }
+
+func (mockCompiledScript) Run(ctx game.ScriptContext, args []string) ([]game.Effect, error) {
+	return nil, nil
 }

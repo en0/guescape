@@ -8,6 +8,7 @@ import (
 
 	"github.com/en0/guescape/internal/cli"
 	"github.com/en0/guescape/internal/hcl"
+	"github.com/en0/guescape/internal/lua"
 )
 
 func main() {
@@ -19,7 +20,7 @@ func main() {
 		os.Exit(2)
 	}
 
-	ws, err := hcl.LoadFile(*path)
+	ws, err := hcl.LoadFile(*path, lua.CompileLua)
 	if err != nil { abort(err, 1) }
 	repl := cli.NewRepl(ws, os.Stdin, os.Stdout)
 	err = repl.Run()

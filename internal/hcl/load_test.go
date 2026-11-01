@@ -62,6 +62,10 @@ func TestDecodeWorld(t *testing.T) {
 							effect "say" {
 								text = "say-one"
 							}
+							effect "object_carriable" {
+								object_id = "object-one"
+								value = true
+							}
 						}
 					}
 				}
@@ -81,7 +85,10 @@ func TestDecodeWorld(t *testing.T) {
 						withObjectActions(
 							testActionBlock(t, "examine",
 								testRuleBlock(t,
-									withRuleEffects(t, sayEffectBlock{"say-one"}),
+									withRuleEffects(t,
+										sayEffectBlock{"say-one"},
+										objectCarriableEffectBlock{ObjectId: "object-one", Carriable: true},
+									),
 									withRuleConditions(t,
 										testWhenBlock(t,
 											withPropCondition("prop-one", "prop-one"),
@@ -99,7 +106,7 @@ func TestDecodeWorld(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			actual, err := decodeWorld(mustParse(t, tt.hcl))
+			actual, err := decodeWorld(mustParse(t, tt.hcl), testLuaCompiler())
 			if err != nil {t.Fatalf("%v", err)}
 			if !reflect.DeepEqual(actual, tt.expect) {
 				t.Fatalf("LoadWorld() -> %v, want %v", actual, tt.expect)

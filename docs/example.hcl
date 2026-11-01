@@ -16,6 +16,71 @@ game {
     desc = "a black void we call zone-two"
   }
 
+  mode "mode-one" {
+    prompt = "username: "
+    state "s" { value = "login" }
+    state "user" { value = "zerocool" }
+    state "pw" { value = "abc123" }
+    state "cwd" { value = "~" }
+    state "last" { value = "" }
+    lua = <<-LUA
+      local function input() return table.concat(args) end
+
+      local function doLogin()
+          setState("last", input())
+          setState("s", "login-password")
+          setPrompt("password: ")
+      end
+
+      local function doPassword()
+          if getState("last") == getState("user") and input() == getState("pw") then
+              setState("s", "term")
+              setPrompt(getState("user").."@mode "..getState("cwd").." $ ")
+          else
+              clearMode()
+              setPrompt("username: ")
+              setState("s", "login")
+              say("Wrong username or password")
+          end
+      end
+
+      local function doTerm()
+          local cmd = args[1]
+          if cmd == "ls" then
+              say("secret.txt")
+          elseif cmd == "cat" then
+              if args[2] == "secret.txt" then say("there is no way out")
+              else say("No such file") end
+          elseif cmd == "exit" then
+              clearMode()
+          else
+              say("command not found: "..tostring(cmd))
+          end
+      end
+
+      local states = {
+          ["login"] = doLogin,
+          ["login-password"] = doPassword,
+          ["term"] = doTerm,
+      }
+
+      local h = states[getState("s")]
+      if h then h() end
+    LUA
+  }
+
+  object "computer" {
+    zone_id = "zone-two"
+    desc = "an old computer"
+    action "use" {
+      rule {
+        effect "set_mode" {
+          mode_id = "mode-one"
+        }
+      }
+    }
+  }
+
   object "button" {
     zone_id = "zone-two"
     desc = "it's a button"

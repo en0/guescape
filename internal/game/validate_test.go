@@ -223,6 +223,27 @@ func TestValidateEffects(t *testing.T) {
 			},
 		},
 
+		// ObjectCarriableEffect Tests
+		{
+			name: "object-carriable-effect-object-must-exist",
+			err: errObjectCarriableEffectObjectNotFound,
+			state: WorldState{
+				zones: []Zone{testZone(t, "zone-one")},
+				objects: []Object{
+					testObject(
+						t, "obj-one", "zone-one",
+						testWithObjectAction(VerbUse,
+							testRule(t, []Effect{
+								ObjectCarriableEffect{
+									ObjectId: testIdentity(t, "obj-no-exist"),
+								},
+							}),
+						),
+					),
+				},
+			},
+		},
+
 		// ObjectPropertyEffect Tests
 		{
 			name: "object-property-effect-object-must-exist",
@@ -259,6 +280,97 @@ func TestValidateEffects(t *testing.T) {
 								ObjectPropertyEffect{
 									ObjectId: testIdentity(t, "obj-one"),
 									PropertyId: testIdentity(t, "prop-no-exist"),
+								},
+							}),
+						),
+					),
+				},
+			},
+		},
+
+		// SetModeEffect
+
+		{
+			name: "set-mode-effect-mode-must-exist",
+			err: errModeEffectModeNotFound,
+			state: WorldState{
+				zones: []Zone{testZone(t, "zone-one")},
+				objects: []Object{
+					testObject(
+						t, "obj-one", "zone-one",
+						testWithObjectAction(VerbUse,
+							testRule(t, []Effect{
+								SetModeEffect{
+									ModeId: testIdentity(t, "mode-no-exist"),
+								},
+							}),
+						),
+					),
+				},
+			},
+		},
+
+		// SetModeStateEffect
+
+		{
+			name: "set-mode-state-effect-mode-must-exist",
+			err: errModeStateEffectModeNotFound,
+			state: WorldState{
+				zones: []Zone{testZone(t, "zone-one")},
+				objects: []Object{
+					testObject(
+						t, "obj-one", "zone-one",
+						testWithObjectAction(VerbUse,
+							testRule(t, []Effect{
+								SetModeStateEffect{
+									ModeId: testIdentity(t, "mode-no-exist"),
+									State: testIdentity(t, "state-one"),
+									Value: "state-one-value",
+								},
+							}),
+						),
+					),
+				},
+			},
+		},
+		{
+			name: "set-mode-state-effect-state-must-exist",
+			err: errModeStateEffectStateNotFound,
+			state: WorldState{
+				zones: []Zone{testZone(t, "zone-one")},
+				modes: []Mode{testMode(t, "mode-one")},
+				objects: []Object{
+					testObject(
+						t, "obj-one", "zone-one",
+						testWithObjectAction(VerbUse,
+							testRule(t, []Effect{
+								SetModeStateEffect{
+									ModeId: testIdentity(t, "mode-one"),
+									State: testIdentity(t, "state-one"),
+									Value: "state-one-value",
+								},
+							}),
+						),
+					),
+				},
+			},
+		},
+
+		// SetModePromptEffect
+
+		{
+			name: "set-mode-prompt-effect-mode-must-exist",
+			err: errModePromptEffectModeNotFound,
+			state: WorldState{
+				zones: []Zone{testZone(t, "zone-one")},
+				objects: []Object{
+					testObject(
+						t, "obj-one", "zone-one",
+						testWithObjectAction(VerbUse,
+							testRule(t, []Effect{
+								SetModePromptEffect{
+									ModeId: testIdentity(t, "mode-no-exist"),
+									Value: "prompt-value",
 								},
 							}),
 						),
