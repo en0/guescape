@@ -12,6 +12,7 @@ type worldBlock struct {
 	Zones 		[]zoneBlock		`hcl:"zone,block"`
 	Objects 	[]objectBlock	`hcl:"object,block"`
 	Messages	[]messageBlock	`hcl:"message,block"`
+	Modes		[]modeBlock		`hcl:"mode,block"`
 }
 
 type messageBlock struct {
@@ -40,11 +41,18 @@ func (wb worldBlock) toDomain() (game.WorldState, error) {
 	}
 
 	var messages map[game.MsgKey]string
-	for _, mb := range wb.Messages {
-		key, err := NewMessageKey(mb.Key)
+	for _, msb := range wb.Messages {
+		key, err := NewMessageKey(msb.Key)
 		if err != nil {errs = append(errs, err); continue}
 		if messages == nil {messages = make(map[game.MsgKey]string)}
-		messages[key] = mb.Text
+		messages[key] = msb.Text
+	}
+
+	var modes []game.Mode
+	for _, mb := range wb.Modes {
+		v, err := mb.toDomain()
+		if err != nil {errs = append(errs, err); continue}
+		modes = append(modes, v)
 	}
 
 	if len(errs) > 0 {
@@ -52,5 +60,5 @@ func (wb worldBlock) toDomain() (game.WorldState, error) {
 	}
 
 	// TODO: parse and pass in modes
-	return game.NewWorldState(szid, wb.Desc, nil, zones, objects, nil, messages)
+	return game.NewWorldState(szid, wb.Desc, nil, zones, objects, modes, messages)
 }

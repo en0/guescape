@@ -51,10 +51,14 @@ func (ws WorldState) Description() string {
 
 // Returns the prompt state of the world
 func (ws WorldState) Prompt() PromptView {
-	return PromptView{
-		Text: fmt.Sprintf("%s> ", ws.currentZoneId.String()),
-		ModeActive: ws.currentModeId != Identity{},
+	var prompt string
+	modeActive := ws.currentModeId != Identity{}
+	if p, ok := ws.mode(ws.currentModeId); ok && modeActive {
+		prompt = p.prompt
+	} else {
+		prompt = fmt.Sprintf("%s> ", ws.currentZoneId.String())
 	}
+	return PromptView{ Text: prompt, ModeActive: modeActive }
 }
 
 // Returns details about the current zone
@@ -111,7 +115,7 @@ func (ws WorldState) CurrentModeState(id Identity) (string, bool) {
 	if !found {
 		return "", false
 	}
-	if v, ok := mode.state[id]; ok {
+	if v, ok := mode.states[id]; ok {
 		return v, true
 	}
 	return "", false
@@ -171,5 +175,11 @@ func (ws WorldState) hasZone(id Identity) bool {
 func (ws WorldState) hasObject(id Identity) bool {
 	return exists(ws.objects, func(z Object) bool {
 		return z.id == id
+	})
+}
+
+func (ws WorldState) hasMode(id Identity) bool {
+	return exists(ws.modes, func(m Mode) bool {
+		return m.id == id
 	})
 }

@@ -125,6 +125,23 @@ func (e objectTargetableEffectBlock) toDomain() (game.Effect, error) {
 	}, err
 }
 
+// objectCarriableEffectBlock
+
+type objectCarriableEffectBlock struct {
+	ObjectId 	string	`hcl:"object_id"`
+	Carriable	bool	`hcl:"value"`
+}
+
+func (objectCarriableEffectBlock) isEffect() { }
+
+func (e objectCarriableEffectBlock) toDomain() (game.Effect, error) {
+	id, err := game.NewIdentity(e.ObjectId)
+	return game.ObjectCarriableEffect{
+		ObjectId: id,
+		Carriable: e.Carriable,
+	}, err
+}
+
 // objectLocationEffectBlock
 
 type objectLocationEffectBlock struct {
@@ -159,5 +176,76 @@ func (e endGameEffectBlock) toDomain() (game.Effect, error) {
 	return game.EndGameEffect{
 		IsWin: e.IsWin,
 		Text: e.Text,
+	}, nil
+}
+
+// setModeEffectBlock
+
+type setModeEffectBlock struct {
+	ModeId 	string 	`hcl:"mode_id"`
+}
+
+func (setModeEffectBlock) isEffect() {}
+
+func (e setModeEffectBlock) toDomain() (game.Effect, error){
+	id, err := game.NewIdentity(e.ModeId)
+	return game.SetModeEffect{ModeId: id}, err
+}
+
+// clearModeEffectBlock
+
+type clearModeEffectBlock struct { }
+
+func (clearModeEffectBlock) isEffect() {}
+
+func (e clearModeEffectBlock) toDomain() (game.Effect, error){
+	return game.ClearModeEffect{}, nil
+}
+
+// setModeStateEffectBlock
+
+type setModeStateEffectBlock struct {
+	ModeId 	string	`hcl:"mode_id"`
+	State 	string	`hcl:"state"`
+	Value 	string	`hcl:"value"`
+}
+
+func (setModeStateEffectBlock) isEffect() {}
+
+func (e setModeStateEffectBlock) toDomain() (game.Effect, error) {
+	var errs []error
+	mid, err := game.NewIdentity(e.ModeId)
+	if err != nil {
+		errs = append(errs, err)
+	}
+	sid, err := game.NewIdentity(e.State)
+	if err != nil {
+		errs = append(errs, err)
+	}
+	return game.SetModeStateEffect{
+		ModeId: mid,
+		State: sid,
+		Value: e.Value,
+	}, errors.Join(errs...)
+}
+
+// SetModePromptEffectBlock
+
+type SetModePromptEffectBlock struct {
+	ModeId 	string	`hcl:"mode_id"`
+	Prompt 	string	`hcl:"prompt"`
+}
+
+func (SetModePromptEffectBlock) isEffect() {}
+
+func (e SetModePromptEffectBlock) toDomain() (game.Effect, error) {
+	var errs []error
+	mid, err := game.NewIdentity(e.ModeId)
+	if err != nil {
+		errs = append(errs, err)
+	}
+	return game.SetModePromptEffect{
+		ModeId: mid,
+		Value: e.Prompt,
 	}, nil
 }

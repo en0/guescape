@@ -6,20 +6,6 @@ import (
 	"testing"
 )
 
-/*
-```markdown
-- [x] SayEffect
-- [x] EndGameEffect
-- [x] CurrentZoneEffect
-- [x] AddFlagEffect
-- [x] RemoveFlagEffect
-- [x] ObjectPropertyEffect
-- [x] ObjectVisibleEffect
-- [x] ObjectTargetableEffect
-- [ ] ObjectLocationEffect
-```
-*/
-
 func TestApply(t *testing.T) {
 
 	newWorldState := func () WorldState {
@@ -32,9 +18,17 @@ func TestApply(t *testing.T) {
 				testObject(t, "obj-exists", "zone-one",
 					testWithObjectVisibility(true),
 					testWithObjectTargetability(true),
+					testWithObjectCarriability(true),
 					testWithObjectProperty(t, "prop-exists", "old-val"),
 				),
 			},
+			testWithWorldStateModes(t, true,
+				testMode(t, "mode-one",
+					testWithModeState(t, "state-one", "initial"),
+					testWithModePrompt("initial"),
+				),
+				testMode(t, "mode-two"),
+			),
 			testWithWorldStateFlag(t, "flag-exists"),
 		)
 	}
@@ -77,8 +71,7 @@ func TestApply(t *testing.T) {
 			name: "add-flag-effect-skips-if-flag-exists",
 			ef: AddFlagEffect{Flag: testIdentity(t, "flag-exists")},
 			check: func(ws WorldState, err error) bool {
-				return len(filter(ws.flags, func(f Identity) bool {
-					return f.value == "flag-exists"
+				return len(filter(ws.flags, func(f Identity) bool { return f.value == "flag-exists"
 				})) == 1
 			},
 		},
@@ -158,6 +151,20 @@ func TestApply(t *testing.T) {
 			ef: ObjectTargetableEffect{ObjectId: testIdentity(t, "obj-no-exists"), Targetable: false},
 		},
 		{
+			name: "object-carriable-effect-sets-object-carriability",
+			ef: ObjectCarriableEffect{ObjectId: testIdentity(t, "obj-exists"), Carriable: false},
+			check: func(ws WorldState, err error) bool {
+				o, found := ws.object(testIdentity(t, "obj-exists"))
+				if !found { return false }
+				return o.carriable == false
+			},
+		},
+		// {
+		// 	name: "object-targetable-effect-targeting-missing-object-is-an-error",
+		// 	err: errEffectObjectNotFound,
+		// 	ef: ObjectTargetableEffect{ObjectId: testIdentity(t, "obj-no-exists"), Targetable: false},
+		// },
+		{
 			name: "object-location-effect-sets-object-location",
 			ef: ObjectLocationEffect{
 				ObjectId: testIdentity(t, "obj-exists"),
@@ -176,6 +183,76 @@ func TestApply(t *testing.T) {
 				ObjectId: testIdentity(t, "obj-no-exists"),
 				ZoneId: testIdentity(t, "zone-exists"),
 			},
+		},
+		{
+			name: "set-mode-effect-sets-current-mode-id",
+			ef: SetModeEffect{
+				ModeId: testIdentity(t, "mode-two"),
+			},
+			check: func(ws WorldState, err error) bool {
+				return ws.currentModeId == testIdentity(t, "mode-two")
+			},
+		},
+		{
+			name: "clear-mode-effect-sets-current-mode-id-to-zero-identity",
+			ef: ClearModeEffect{},
+			check: func(ws WorldState, err error) bool {
+				return ws.currentModeId == (Identity{})
+			},
+		},
+		{
+			name: "set-mode-state-effect-sets-the-mode-state-when-present",
+			ef: SetModeStateEffect{
+				ModeId: testIdentity(t, "mode-one"),
+				State: testIdentity(t, "state-one"),
+				Value: "foo",
+			},
+			check: func(ws WorldState, err error) bool {
+				m, found := ws.mode(testIdentity(t, "mode-one"))
+				if !found { return false }
+				if v, ok := m.states[testIdentity(t, "state-one")]; ok {
+					return v == "foo"
+				}
+				return false
+			},
+		},
+		{
+			name: "set-mode-state-effect-returns-error-when-the-state-is-not-present",
+			ef: SetModeStateEffect{
+				ModeId: testIdentity(t, "mode-one"),
+				State: testIdentity(t, "state-no-exists"),
+				Value: "foo",
+			},
+			err: errEffectStateNotFound,
+		},
+		{
+			name: "set-mode-state-effect-returns-error-when-the-mode-is-not-present",
+			ef: SetModeStateEffect{
+				ModeId: testIdentity(t, "mode-no-exists"),
+				State: testIdentity(t, "state-one"),
+				Value: "foo",
+			},
+			err: errEffectModeNotFound,
+		},
+		{
+			name: "set-mode-prompt-effect-sets-mode-prompt",
+			ef: SetModePromptEffect{
+				ModeId: testIdentity(t, "mode-one"),
+				Value: "foo",
+			},
+			check: func(ws WorldState, err error) bool {
+				m, found := ws.mode(testIdentity(t, "mode-one"))
+				if !found { return false }
+				return m.prompt == "foo"
+			},
+		},
+		{
+			name: "set-mode-prompt-effect-returns-error-when-mode-not-present",
+			ef: SetModePromptEffect{
+				ModeId: testIdentity(t, "mode-no-exists"),
+				Value: "foo",
+			},
+			err: errEffectModeNotFound,
 		},
 	}
 	for _, tt := range tests {

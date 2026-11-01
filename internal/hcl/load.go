@@ -15,9 +15,14 @@ type worldRoot struct {
 	Game worldBlock `hcl:"game,block"`
 }
 
+type compileLuaFunc func(string) (game.CompiledScript, error)
+
 // LoadFile loads the world state from the local file system.
 // The format is expected to by hcl.v2
-func LoadFile(filename string) (game.WorldState, error) {
+func LoadFile(
+	filename string,
+	compile_lua compileLuaFunc,
+) (game.WorldState, error) {
 	src, err := os.ReadFile(filename)
 	if err != nil {
 		return game.WorldState{}, err
@@ -28,7 +33,7 @@ func LoadFile(filename string) (game.WorldState, error) {
 		return game.WorldState{}, err
 	}
 
-	world, err := decodeWorld(body)
+	world, err := decodeWorld(body, compile_lua)
 	if err != nil {
 		return game.WorldState{}, err
 	}
@@ -51,14 +56,50 @@ func parseHCL(src []byte, filename string) (hcl.Body, error) {
 	return file.Body, nil
 }
 
-func decodeWorld(body hcl.Body) (worldBlock, error) {
+func decodeWorld(
+	body hcl.Body,
+	compile_lua compileLuaFunc,
+) (worldBlock, error) {
 	var root worldRoot
 	diags := gohcl.DecodeBody(body, nil, &root)
 	if diags.HasErrors() {
-		errs := appendDiagsAs(nil, diags, decodingErrorMapper)
+		err := appendDiagsAs(nil, diags, decodingErrorMapper)
+		return worldBlock{}, errors.Join(err...)
+	}
+	var errs []error;
+	var err error
+	err = resolveEffects(&root.Game)
+	if err != nil {
+		errs = append(errs, err)
+	}
+	err = resolveScripts(&root.Game, compile_lua)
+	if err != nil {
+		errs = append(errs, err)
+	}
+	if len(errs) > 0 {
 		return worldBlock{}, errors.Join(errs...)
 	}
-	return root.Game, resolveEffects(&root.Game)
+	return root.Game, nil
+}
+
+func resolveScripts(
+	g *worldBlock,
+	compile_lua compileLuaFunc,
+) error {
+	var errs []error
+	for i := range g.Modes {
+		mb := &g.Modes[i]
+		if mb.Lua == nil {
+			continue
+		}
+		script, err := compile_lua(*mb.Lua)
+		if err != nil {
+			errs = append(errs, err)
+			continue
+		}
+		mb.luaScript = script
+	}
+	return errors.Join(errs...)
 }
 
 func resolveEffects(g *worldBlock) error {
@@ -98,6 +139,10 @@ func loadEffect(b effectBlock) (effect, hcl.Diagnostics) {
 		var v objectTargetableEffectBlock
 		d := gohcl.DecodeBody(b.Body, nil, &v)
 		return v, d
+	case "object_carriable":
+		var v objectCarriableEffectBlock
+		d := gohcl.DecodeBody(b.Body, nil, &v)
+		return v, d
 	case "add_flag":
 		var v addFlagEffectBlock
 		d := gohcl.DecodeBody(b.Body, nil, &v)
@@ -122,11 +167,28 @@ func loadEffect(b effectBlock) (effect, hcl.Diagnostics) {
 		var v objectLocationEffectBlock
 		d := gohcl.DecodeBody(b.Body, nil, &v)
 		return v, d
+	case "set_mode":
+		var v setModeEffectBlock
+		d := gohcl.DecodeBody(b.Body, nil, &v)
+		return v, d
+	case "clear_mode":
+		var v clearModeEffectBlock
+		d := gohcl.DecodeBody(b.Body, nil, &v)
+		return v, d
+	case "set_mode_state":
+		var v setModeStateEffectBlock
+		d := gohcl.DecodeBody(b.Body, nil, &v)
+		return v, d
+	case "set_mode_prompt":
+		var v SetModePromptEffectBlock
+		d := gohcl.DecodeBody(b.Body, nil, &v)
+		return v, d
 	default:
 		return nil, hcl.Diagnostics{{
 			Severity: hcl.DiagError,
 			Summary:  "unknown effect type",
 			Detail:   fmt.Sprintf("%q is not a recognized effect discriminator", b.Kind),
+			Subject: b.Body.MissingItemRange().Ptr(),
 		}}
 	}
 }

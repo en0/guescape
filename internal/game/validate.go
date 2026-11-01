@@ -10,12 +10,17 @@ var errObjectLocationEffectZoneNotFound = errors.New("object location effect ref
 var errObjectLocationEffectObjectNotFound = errors.New("object location effect references an unknown object")
 var errObjectTargetableEffectObjectNotFound = errors.New("object targetable effect references and unknown object")
 var errObjectVisibleEffectObjectNotFound = errors.New("object visible effect references an unknown object")
+var errObjectCarriableEffectObjectNotFound = errors.New("object carriable effect references an unknown object")
 var errObjectPropertyEffectObjectNotFound = errors.New("object property effect references an unknown object")
 var errObjectPropertyEffectPropertyNotFound = errors.New("object property effect references an unknown property")
 var errPropertyConditionPropertyNotFound = errors.New("property condition references an unknown property")
 var errUseWithConditionObjectNotFound = errors.New("use with condition references an unknown object")
 var errExitZoneNotFound = errors.New("zone exit references an unknown zone")
 var errStartZoneNotFound = errors.New("start zone references an unknown zone")
+var errModeEffectModeNotFound = errors.New("mode effect references an unknown mode")
+var errModeStateEffectModeNotFound = errors.New("mode state effect references an unknown mode")
+var errModeStateEffectStateNotFound = errors.New("mode state effect references an unknown state")
+var errModePromptEffectModeNotFound = errors.New("mode prompt effect references an unknown mode")
 
 func validateWorldState(ws WorldState) error {
 	var errs []error
@@ -47,6 +52,11 @@ func validateObjects(ws WorldState) []error {
 }
 
 func validateEffects(ws WorldState) []error {
+	/*
+	 * TODO: Validate new script engine elements
+	 # - set object carriable effect
+	 * - current mode id exists if set
+	 */
 	var errs []error
 	for _, o := range ws.objects {
 		for _, a := range o.actions {
@@ -92,6 +102,14 @@ func validateEffects(ws WorldState) []error {
 								Referent: e.ObjectId,
 							})
 						}
+					case ObjectCarriableEffect:
+						if !ws.hasObject(e.ObjectId) {
+							errs = append(errs, ReferenceError{
+								kind: errObjectCarriableEffectObjectNotFound,
+								Referrer: o.id,
+								Referent: e.ObjectId,
+							})
+						}
 					case ObjectPropertyEffect:
 						obj, found := ws.object(e.ObjectId)
 						if !found {
@@ -106,6 +124,34 @@ func validateEffects(ws WorldState) []error {
 								Referrer: o.id,
 								Scope: e.ObjectId,
 								Referent: e.PropertyId,
+							})
+						}
+					case SetModeEffect:
+						if !ws.hasMode(e.ModeId) {
+							errs = append(errs, ReferenceError{
+								kind: errModeEffectModeNotFound,
+								Referent: e.ModeId,
+							})
+						}
+					case SetModeStateEffect:
+						mode, found := ws.mode(e.ModeId)
+						if !found {
+							errs = append(errs, ReferenceError{
+								kind: errModeStateEffectModeNotFound,
+								Referent: e.ModeId,
+							})
+						} else if !mode.hasState(e.State) {
+							errs = append(errs, ReferenceError{
+								kind: errModeStateEffectStateNotFound,
+								Referrer: e.ModeId,
+								Referent: e.State,
+							})
+						}
+					case SetModePromptEffect:
+						if !ws.hasMode(e.ModeId) {
+							errs = append(errs, ReferenceError{
+								kind: errModePromptEffectModeNotFound,
+								Referent: e.ModeId,
 							})
 						}
 					}

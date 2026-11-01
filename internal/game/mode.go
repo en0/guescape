@@ -3,7 +3,7 @@ package game
 type Mode struct{
 	id 			Identity
 	prompt 		string
-	state 		map[Identity]string
+	states 		map[Identity]string
 	script 		CompiledScript
 }
 
@@ -11,7 +11,17 @@ func NewMode(id Identity, prompt string, state map[Identity]string, script Compi
 	return Mode{
 		id: id,
 		prompt: prompt,
-		state: state,
+		states: state,
 		script: script,
 	}
+}
+
+func (o Mode) state(id Identity) (string, bool) {
+	result, ok := o.states[id]
+	return result, ok
+}
+
+func (o Mode) hasState(id Identity) bool {
+	_, ok := o.state(id)
+	return ok
 }

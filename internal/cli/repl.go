@@ -37,8 +37,8 @@ func NewRepl(ws game.WorldState, in io.Reader, out io.Writer) Repl {
 
 func (r *Repl) handleAction(act game.Action) {
 	var ws = r.ws
-	effects, _ := game.PlanEffects(ws, act)
-	// TODO: handle error
+	effects, err := game.PlanEffects(ws, act)
+	if err != nil { r.handleError(err); return }
 	for _, ef := range effects {
 
 		switch e := ef.(type) {

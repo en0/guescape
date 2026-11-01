@@ -62,12 +62,12 @@ type ObjectTargetableEffect struct {
 }
 func (ObjectTargetableEffect) isEffect() {}
 
-// TODO: Do we need this?
-// type ObjectCarriableEffect struct {
-// 	ObjectId Identity
-// 	Carriable bool
-// }
-// func (ObjectCarriableEffect) isEffect() {}
+// ObjectCarriableEffect sets whether an object can be picked up
+type ObjectCarriableEffect struct {
+	ObjectId Identity
+	Carriable bool
+}
+func (ObjectCarriableEffect) isEffect() {}
 
 // ObjectLocationEffect moves an object to a zone.
 type ObjectLocationEffect struct {
@@ -97,3 +97,23 @@ func (SetModeEffect) isEffect() {}
 // Clears the active mode.
 type ClearModeEffect struct { }
 func (ClearModeEffect) isEffect() {}
+
+// Set a state value on the current mode
+type SetModeStateEffect struct {
+	// The mode to set state on.
+	ModeId Identity
+	// The state on the mode to set.
+	State Identity
+	// The desired value
+	Value string
+}
+func (SetModeStateEffect) isEffect() {}
+
+// Set a mode prompt
+type SetModePromptEffect struct {
+	// The mode to set
+	ModeId Identity
+	// The value to set
+	Value string
+}
+func (SetModePromptEffect) isEffect() {}

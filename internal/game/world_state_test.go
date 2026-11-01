@@ -179,7 +179,16 @@ func TestPrompt(t *testing.T) {
 				nil,
 				testWithWorldStateModes(t, true, testMode(t, "mode-one")),
 			),
-			expect: PromptView{Text: "zone-one> ", ModeActive: true},
+			expect: PromptView{Text: "", ModeActive: true},
+		},
+		{
+			name: "prompt-view-contains-mode-prompt",
+			ws: testWorldState(t, "zone-one", "zone-one",
+				[]Zone{testZone(t, "zone-one")},
+				nil,
+				testWithWorldStateModes(t, true, testMode(t, "mode-one", testWithModePrompt("test-one"))),
+			),
+			expect: PromptView{Text: "test-one", ModeActive: true},
 		},
 	}
 	for _, tt := range tests {
