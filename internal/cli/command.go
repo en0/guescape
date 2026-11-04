@@ -73,7 +73,7 @@ var commands = []command{
 		},
 		check: func(s []string) bool {return len(s) == 1},
 		handle: func(u uiInterface, s []string) {
-			id, err := game.NewIdentity(strings.ToLower(s[0]))
+			id, err := u.resolveExit(strings.ToLower(s[0]))
 			if err != nil { u.handleError(err); return }
 			act := game.NewNavAction(game.CmdMove, id)
 			u.handleAction(act)
@@ -89,7 +89,7 @@ var commands = []command{
 		},
 		check: func(s []string) bool {return len(s) == 1},
 		handle: func(u uiInterface, s []string) {
-			id, err := game.NewIdentity(strings.ToLower(s[0]))
+			id, err := u.resolveObject(strings.ToLower(s[0]))
 			if err != nil { u.handleError(err); return }
 			act := game.NewObjectAction(game.VerbExamine, id)
 			u.handleAction(act)
@@ -106,15 +106,15 @@ var commands = []command{
 		check: func(s []string) bool {a := len(s); return a == 1 || a == 3},
 		handle: func(u uiInterface, s []string) {
 			if len(s) == 1 {
-				id, err := game.NewIdentity(strings.ToLower(s[0]))
+				id, err := u.resolveObject(strings.ToLower(s[0]))
 				if err != nil { u.handleError(err); return }
 				act := game.NewObjectAction(game.VerbUse, id)
 				u.handleAction(act)
 			}
 			if len(s) == 3 {
-				iid, err := game.NewIdentity(strings.ToLower(s[0]))
+				iid, err := u.resolveItem(strings.ToLower(s[0]))
 				if err != nil { u.handleError(err); return }
-				oid, err := game.NewIdentity(strings.ToLower(s[2]))
+				oid, err := u.resolveObject(strings.ToLower(s[2]))
 				if err != nil { u.handleError(err); return }
 				act := game.NewObjectActionWithItem(game.VerbUse, oid, iid)
 				u.handleAction(act)
@@ -130,7 +130,7 @@ var commands = []command{
 		},
 		check: func(s []string) bool {return len(s) == 1},
 		handle: func(u uiInterface, s []string) {
-			id, err := game.NewIdentity(strings.ToLower(s[0]))
+			id, err := u.resolveObject(strings.ToLower(s[0]))
 			if err != nil { u.handleError(err); return }
 			act := game.NewObjectAction(game.VerbTake, id)
 			u.handleAction(act)
@@ -145,7 +145,7 @@ var commands = []command{
 		},
 		check: func(s []string) bool {return len(s) == 1},
 		handle: func(u uiInterface, s []string) {
-			id, err := game.NewIdentity(strings.ToLower(s[0]))
+			id, err := u.resolveObject(strings.ToLower(s[0]))
 			if err != nil { u.handleError(err); return }
 			act := game.NewObjectAction(game.VerbDrop, id)
 			u.handleAction(act)

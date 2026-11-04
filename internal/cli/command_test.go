@@ -10,6 +10,8 @@ import (
 	"github.com/en0/guescape/internal/game"
 )
 
+var errTest = errors.New("boom")
+
 type testCallResult[T any] struct {
 	called bool
 	calledWith T
@@ -23,6 +25,13 @@ type testUiSpy struct {
     handleLookCalled testCallResult[int]
     handleInventoryCalled testCallResult[int]
 	handleErrorCalled testCallResult[error]
+
+	resolveExitIdentity game.Identity
+	resolveExitError error
+	resolveObjectIdentity game.Identity
+	resolveObjectError error
+	resolveItemIdentity game.Identity
+	resolveItemError error
 }
 
 func (t *testUiSpy) handleAction(a game.Action) {
@@ -52,6 +61,19 @@ func (t *testUiSpy) handleInventory() {
 func (t *testUiSpy) handleError(e error) {
 	t.handleErrorCalled = testCallResult[error]{true, e}
 }
+
+func (t *testUiSpy) resolveObject(p string) (game.Identity, error) {
+	return t.resolveObjectIdentity, t.resolveObjectError
+}
+
+func (t *testUiSpy) resolveItem(p string) (game.Identity, error) {
+	return t.resolveItemIdentity, t.resolveItemError
+}
+
+func (t *testUiSpy) resolveExit(p string) (game.Identity, error) {
+	return t.resolveExitIdentity, t.resolveExitError
+}
+
 
 func testCommand(t *testing.T, name string) command {
 	t.Helper()
@@ -133,6 +155,12 @@ func TestCommandHandlers(t *testing.T) {
 		name string
 		cmd string
 		args []string
+		resolveExitIdentity game.Identity
+		resolveExitError error
+		resolveObjectIdentity game.Identity
+		resolveObjectError error
+		resolveItemIdentity game.Identity
+		resolveItemError error
 		pass func (*testUiSpy) (string, bool)
 	} {
 		{
@@ -182,6 +210,7 @@ func TestCommandHandlers(t *testing.T) {
 		{
 			name: "move",
 			args: []string{"east"},
+			resolveExitIdentity: testIdentity(t, "east"),
 			pass: func(tu *testUiSpy) (string, bool) {
 				ca := tu.handleActionCalled.called
 				if !ca { return "handle not called", false }
@@ -191,6 +220,7 @@ func TestCommandHandlers(t *testing.T) {
 		{
 			name: "examine",
 			args: []string{"obj-one"},
+			resolveObjectIdentity: testIdentity(t, "obj-one"),
 			pass: func(tu *testUiSpy) (string, bool) {
 				ca := tu.handleActionCalled.called
 				if !ca { return "handle not called", false }
@@ -199,6 +229,7 @@ func TestCommandHandlers(t *testing.T) {
 		},
 		{
 			name: "use",
+			resolveObjectIdentity: testIdentity(t, "obj"),
 			args: []string{"obj"},
 			pass: func(tu *testUiSpy) (string, bool) {
 				ca := tu.handleActionCalled.called
@@ -209,6 +240,8 @@ func TestCommandHandlers(t *testing.T) {
 		{
 			name: "use-item-on-obj",
 			cmd: "use",
+			resolveObjectIdentity: testIdentity(t, "obj"),
+			resolveItemIdentity: testIdentity(t, "item"),
 			args: []string{"item", "on", "obj"},
 			pass: func(tu *testUiSpy) (string, bool) {
 				ca := tu.handleActionCalled.called
@@ -219,6 +252,7 @@ func TestCommandHandlers(t *testing.T) {
 		{
 			name: "take",
 			args: []string{"obj"},
+			resolveObjectIdentity: testIdentity(t, "obj"),
 			pass: func(tu *testUiSpy) (string, bool) {
 				ca := tu.handleActionCalled.called
 				if !ca { return "handle not called", false }
@@ -228,6 +262,7 @@ func TestCommandHandlers(t *testing.T) {
 		{
 			name: "drop",
 			args: []string{"obj"},
+			resolveObjectIdentity: testIdentity(t, "obj"),
 			pass: func(tu *testUiSpy) (string, bool) {
 				ca := tu.handleActionCalled.called
 				if !ca { return "handle not called", false }
@@ -238,13 +273,14 @@ func TestCommandHandlers(t *testing.T) {
 			name: "move with bad object name should call handle target error",
 			cmd: "move",
 			args: []string{"obj1"},
+			resolveExitError: errTest,
 			pass: func(tu *testUiSpy) (string, bool) {
 				ca := tu.handleActionCalled.called
 				eca := tu.handleErrorCalled.called
 				ecw := tu.handleErrorCalled.calledWith
 				if ca { return "handle action called", false }
 				if !eca { return "handle target error not called", false }
-				if !errors.Is(ecw, game.ErrInvalidIdentity) {
+				if !errors.Is(ecw, errTest) {
 					return fmt.Sprintf("unexpected error: %v", ecw), false
 				}
 				return "", true
@@ -254,13 +290,14 @@ func TestCommandHandlers(t *testing.T) {
 			name: "examine with bad object name should call handle target error",
 			cmd: "examine",
 			args: []string{"obj1"},
+			resolveObjectError: errTest,
 			pass: func(tu *testUiSpy) (string, bool) {
 				ca := tu.handleActionCalled.called
 				eca := tu.handleErrorCalled.called
 				ecw := tu.handleErrorCalled.calledWith
 				if ca { return "handle action called", false }
 				if !eca { return "handle target error not called", false }
-				if !errors.Is(ecw, game.ErrInvalidIdentity) {
+				if !errors.Is(ecw, errTest) {
 					return fmt.Sprintf("unexpected error: %v", ecw), false
 				}
 				return "", true
@@ -270,13 +307,14 @@ func TestCommandHandlers(t *testing.T) {
 			name: "use with bad object name should call handle target error",
 			cmd: "use",
 			args: []string{"obj1"},
+			resolveObjectError: errTest,
 			pass: func(tu *testUiSpy) (string, bool) {
 				ca := tu.handleActionCalled.called
 				eca := tu.handleErrorCalled.called
 				ecw := tu.handleErrorCalled.calledWith
 				if ca { return "handle action called", false }
 				if !eca { return "handle target error not called", false }
-				if !errors.Is(ecw, game.ErrInvalidIdentity) {
+				if !errors.Is(ecw, errTest) {
 					return fmt.Sprintf("unexpected error: %v", ecw), false
 				}
 				return "", true
@@ -286,13 +324,14 @@ func TestCommandHandlers(t *testing.T) {
 			name: "use-on with bad item name should call handle target error",
 			cmd: "use",
 			args: []string{"obj1", "on", "obj-one"},
+			resolveItemError: errTest,
 			pass: func(tu *testUiSpy) (string, bool) {
 				ca := tu.handleActionCalled.called
 				eca := tu.handleErrorCalled.called
 				ecw := tu.handleErrorCalled.calledWith
 				if ca { return "handle action called", false }
 				if !eca { return "handle target error not called", false }
-				if !errors.Is(ecw, game.ErrInvalidIdentity) {
+				if !errors.Is(ecw, errTest) {
 					return fmt.Sprintf("unexpected error: %v", ecw), false
 				}
 				return "", true
@@ -302,13 +341,15 @@ func TestCommandHandlers(t *testing.T) {
 			name: "use-on with bad object name should call handle target error",
 			cmd: "use",
 			args: []string{"obj-one", "on", "obj1"},
+			resolveItemIdentity: testIdentity(t, "obj-one"),
+			resolveObjectError: errTest,
 			pass: func(tu *testUiSpy) (string, bool) {
 				ca := tu.handleActionCalled.called
 				eca := tu.handleErrorCalled.called
 				ecw := tu.handleErrorCalled.calledWith
 				if ca { return "handle action called", false }
 				if !eca { return "handle target error not called", false }
-				if !errors.Is(ecw, game.ErrInvalidIdentity) {
+				if !errors.Is(ecw, errTest) {
 					return fmt.Sprintf("unexpected error: %v", ecw), false
 				}
 				return "", true
@@ -318,13 +359,14 @@ func TestCommandHandlers(t *testing.T) {
 			name: "take with bad object name should call handle target error",
 			cmd: "take",
 			args: []string{"obj1"},
+			resolveObjectError: errTest,
 			pass: func(tu *testUiSpy) (string, bool) {
 				ca := tu.handleActionCalled.called
 				eca := tu.handleErrorCalled.called
 				ecw := tu.handleErrorCalled.calledWith
 				if ca { return "handle action called", false }
 				if !eca { return "handle target error not called", false }
-				if !errors.Is(ecw, game.ErrInvalidIdentity) {
+				if !errors.Is(ecw, errTest) {
 					return fmt.Sprintf("unexpected error: %v", ecw), false
 				}
 				return "", true
@@ -334,13 +376,14 @@ func TestCommandHandlers(t *testing.T) {
 			name: "drop with bad object name should call handle target error",
 			cmd: "drop",
 			args: []string{"obj1"},
+			resolveObjectError: errTest,
 			pass: func(tu *testUiSpy) (string, bool) {
 				ca := tu.handleActionCalled.called
 				eca := tu.handleErrorCalled.called
 				ecw := tu.handleErrorCalled.calledWith
 				if ca { return "handle action called", false }
 				if !eca { return "handle target error not called", false }
-				if !errors.Is(ecw, game.ErrInvalidIdentity) {
+				if !errors.Is(ecw, errTest) {
 					return fmt.Sprintf("unexpected error: %v", ecw), false
 				}
 				return "", true
@@ -350,7 +393,14 @@ func TestCommandHandlers(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			ui :=  testUiSpy{}
+			ui :=  testUiSpy{
+				resolveExitIdentity: tt.resolveExitIdentity,
+				resolveExitError: tt.resolveExitError,
+				resolveObjectIdentity: tt.resolveObjectIdentity,
+				resolveObjectError: tt.resolveObjectError,
+				resolveItemIdentity: tt.resolveItemIdentity,
+				resolveItemError: tt.resolveItemError,
+			}
 			name := tt.name
 			if tt.cmd != "" { name = tt.cmd }
 			cmd := testCommand(t, name)

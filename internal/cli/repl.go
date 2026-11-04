@@ -19,6 +19,9 @@ type uiInterface interface {
     handleLook()
     handleInventory()
 	handleError(error)
+	resolveExit(string) (game.Identity, error)
+	resolveItem(string) (game.Identity, error)
+	resolveObject(string) (game.Identity, error)
 }
 
 type Repl struct {
@@ -27,7 +30,6 @@ type Repl struct {
 	out io.Writer
 	in *bufio.Scanner
 }
-
 
 func NewRepl(ws game.WorldState, in io.Reader, out io.Writer) Repl {
 	bufferedIn := bufio.NewReader(in)
@@ -136,6 +138,30 @@ func (r *Repl) handleInventory() {
 
 func (r *Repl) handleError(err error) {
 	fmt.Fprintf(r.out, "Got an error: %v\n", err)
+}
+
+func (r *Repl) resolveObject(p string) (game.Identity, error) {
+	if v, ok := r.ws.ResolveObject(p); ok {
+		return v, nil
+	}
+	// TODO: map these to world errors
+	return game.Identity{}, fmt.Errorf("object not found: %v", p)
+}
+
+func (r *Repl) resolveItem(p string) (game.Identity, error) {
+	if v, ok := r.ws.ResolveItem(p); ok {
+		return v, nil
+	}
+	// TODO: map these to world errors
+	return game.Identity{}, fmt.Errorf("item not found: %v", p)
+}
+
+func (r *Repl) resolveExit(p string) (game.Identity, error) {
+	if v, ok := r.ws.ResolveExit(p); ok {
+		return v, nil
+	}
+	// TODO: map these to world errors
+	return game.Identity{}, fmt.Errorf("exit not found: %v", p)
 }
 
 func (r *Repl) prompt(p string) ([]string, error) {

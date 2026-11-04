@@ -119,8 +119,33 @@ func (ws WorldState) ModeState(modeId Identity, state Identity) (string, bool) {
 	return "", false
 }
 
+// Retrieve the Identity of a currently active mdoe.
 func (ws WorldState) CurrentModeId() Identity {
 	return ws.currentModeId
+}
+
+// Retrieve the matching ObjectId from the available objects in the current zone.
+func (ws WorldState) ResolveObject(partial string) (Identity, bool) {
+	return matchIdentity(transform(filter(ws.objects, func(o Object) bool {
+		return ws.isObjectActionable(o)
+	}), func(o Object) Identity {
+		return o.id
+	}), partial)
+}
+
+// Retrieve the matching ObjectId from the available objects in the player's inventory.
+func (ws WorldState) ResolveItem(partial string) (Identity, bool) {
+	return matchIdentity(transform(filter(ws.objects, func(o Object) bool {
+		return o.inInventory()
+	}), func(o Object) Identity {
+		return o.id
+	}), partial)
+}
+
+// Retrieve the matching ZoneExitId from the available ZoneExits in the current zone.
+func (ws WorldState) ResolveExit(partial string) (Identity, bool) {
+	zone := ws.currentZone()
+    return matchIdentity(slices.Collect(maps.Keys(zone.exits)), partial)
 }
 
 func (ws WorldState) message(key MsgKey) string {
@@ -163,9 +188,14 @@ func (ws WorldState) object(id Identity) (Object, bool) {
 func (ws WorldState) actionableObject(id Identity) (Object, bool) {
 	return find(ws.objects, func(o Object) bool {
 		if o.id != id { return false }
-		inCurrentZone := o.zoneId == ws.currentZoneId && o.targetable
-		return inCurrentZone || o.inInventory()
+		return ws.isObjectActionable(o)
 	})
+}
+
+// Determine if the given object is in the current zone and targetable, or in inventory
+func (ws WorldState) isObjectActionable(o Object) bool {
+	inCurrentZone := o.zoneId == ws.currentZoneId && o.targetable
+	return inCurrentZone || o.inInventory()
 }
 
 func (ws WorldState) hasZone(id Identity) bool {

@@ -356,3 +356,173 @@ func TestCurrentModeState(t *testing.T) {
 		})
 	}
 }
+
+func TestResolveObject(t *testing.T) {
+	tests := []struct {
+		name string
+		partial string
+		expectIdentity Identity
+		expectFound bool
+		ws WorldState
+	} {
+		{
+			name: "partial-match-returns-object",
+			partial: "one",
+			expectIdentity: testIdentity(t, "obj-one"),
+			expectFound: true,
+			ws: WorldState{
+				currentZoneId: testIdentity(t, "zone-one"),
+				objects: []Object{
+					testObject(t, "obj-one", "zone-one"),
+				},
+			},
+		},
+		{
+			name: "not-found-if-none-in-zone",
+			partial: "one",
+			expectFound: false,
+			ws: WorldState{
+				currentZoneId: testIdentity(t, "zone-one"),
+				objects: []Object{
+					testObject(t, "obj-one", "zone-two"),
+				},
+			},
+		},
+		{
+			name: "not-found-if-no-exist",
+			partial: "one",
+			expectFound: false,
+			ws: WorldState{currentZoneId: testIdentity(t, "zone-one")},
+		},
+		{
+			name: "found-if-in-inventory",
+			partial: "one",
+			expectIdentity: testIdentity(t, "obj-one"),
+			expectFound: true,
+			ws: WorldState{
+				currentZoneId: testIdentity(t, "zone-one"),
+				objects: []Object{
+					testObject(t, "obj-one", testInventoryZoneId),
+				},
+			},
+		},
+	}
+	for _, tt := range tests {
+		identity, found := tt.ws.ResolveObject(tt.partial)
+		if found != tt.expectFound || identity != tt.expectIdentity {
+			t.Fatalf(
+				"ws.ResolveObject(%q) (%v, %v), want (%v, %v)",
+				tt.partial, identity, found,
+				tt.expectIdentity, tt.expectFound)
+		}
+	}
+}
+
+func TestResolveItem(t *testing.T) {
+	tests := []struct {
+		name string
+		partial string
+		expectIdentity Identity
+		expectFound bool
+		ws WorldState
+	} {
+		{
+			name: "partial-match-returns-object",
+			partial: "one",
+			expectIdentity: testIdentity(t, "obj-one"),
+			expectFound: true,
+			ws: WorldState{
+				objects: []Object{
+					testObject(t, "obj-one", testInventoryZoneId),
+				},
+			},
+		},
+		{
+			name: "not-found-if-not-in-inventory",
+			partial: "one",
+			expectFound: false,
+			ws: WorldState{
+				currentZoneId: testIdentity(t, "zone-one"),
+				objects: []Object{
+					testObject(t, "obj-one", "zone-one"),
+				},
+			},
+		},
+		{
+			name: "not-found-if-no-exist",
+			partial: "one",
+			expectFound: false,
+			ws: WorldState{currentZoneId: testIdentity(t, "zone-one")},
+		},
+	}
+	for _, tt := range tests {
+		identity, found := tt.ws.ResolveItem(tt.partial)
+		if found != tt.expectFound || identity != tt.expectIdentity {
+			t.Fatalf(
+				"ws.ResolveItem(%q) (%v, %v), want (%v, %v)",
+				tt.partial, identity, found,
+				tt.expectIdentity, tt.expectFound)
+		}
+	}
+}
+
+func TestResolveExit(t *testing.T) {
+	tests := []struct {
+		name string
+		partial string
+		expectIdentity Identity
+		expectFound bool
+		ws WorldState
+	} {
+		{
+			name: "partial-match-returns-exit",
+			partial: "one",
+			expectIdentity: testIdentity(t, "exit-one"),
+			expectFound: true,
+			ws: WorldState{
+				currentZoneId: testIdentity(t, "zone-one"),
+				zones: []Zone{
+					testZone(t, "zone-one",
+						testWithZoneExit(t, "exit-one", "zone-two"),
+						testWithZoneExit(t, "exit-two", "zone-two"),
+					),
+				},
+			},
+		},
+		{
+			name: "not-found-if-exit-not-in-zone",
+			partial: "one",
+			expectFound: false,
+			ws: WorldState{
+				currentZoneId: testIdentity(t, "zone-two"),
+				zones: []Zone{
+					testZone(t, "zone-two"),
+					testZone(t, "zone-one",
+						testWithZoneExit(t, "exit-one", "zone-two"),
+						testWithZoneExit(t, "exit-two", "zone-two"),
+					),
+				},
+			},
+		},
+		{
+			name: "not-found-if-no-exist",
+			partial: "one",
+			expectFound: false,
+			ws: WorldState{
+				currentZoneId: testIdentity(t, "zone-one"),
+				zones: []Zone{
+					testZone(t, "zone-one"),
+				},
+			},
+		},
+	}
+	for _, tt := range tests {
+		identity, found := tt.ws.ResolveExit(tt.partial)
+		if found != tt.expectFound || identity != tt.expectIdentity {
+			t.Fatalf(
+				"ws.ResolveExit(%q) (%v, %v), want (%v, %v)",
+				tt.partial, identity, found,
+				tt.expectIdentity, tt.expectFound)
+		}
+	}
+}
