@@ -48,10 +48,12 @@ func (e exitBlock) toDomain() (game.ZoneExit, error) {
 	if err != nil {errs = append(errs, err)}
 
 	var flags []game.Identity
-	for _, f := range *e.Flags {
-		v, err := game.NewIdentity(f)
-		if err != nil {errs = append(errs, err); continue}
-		flags = append(flags, v)
+	if e.Flags != nil {
+		for _, f := range *e.Flags {
+			v, err := game.NewIdentity(f)
+			if err != nil {errs = append(errs, err); continue}
+			flags = append(flags, v)
+		}
 	}
 
 	return game.NewZoneExit(id, flags), errors.Join(errs...)

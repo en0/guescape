@@ -142,3 +142,16 @@ description, at the cost of more engine machinery. Worth the complexity?
 **open question** Is the sync burden simply too much to put on designers, regardless of mechanism?
 The appeal of the current lists is that the designer manages only the `visible` flag and the engine
 handles discovery.
+
+### HCL: Move objects into zone block
+
+When you have a lot of zones and a lot of objects, it gets confusing.
+
+```hcl
+game {
+    zone "foo" {
+        object "bar" {
+        }
+    }
+}
+```
