@@ -29,15 +29,9 @@ func testWorldBlock(t *testing.T, startZoneId string, desc string, opts ...testO
 	}, opts...)
 }
 
-func withExitFlag(flag string) testOptions[exitBlock] {
-	return func(eb *exitBlock) {
-		eb.Flags = append(eb.Flags, flag)
-	}
-}
-
 func withExitFlags(flags ...string) testOptions[exitBlock] {
 	return func(eb *exitBlock) {
-		eb.Flags = flags
+		eb.Flags = &flags
 	}
 }
 
@@ -81,10 +75,10 @@ func withObjectCarriable(value bool) testOptions[objectBlock] {
 
 func withObjectProperty(id string, value string) testOptions[objectBlock] {
 	return func(ob *objectBlock) {
-		ob.Properties = append(ob.Properties, propertyBlock{
-			Key: id,
-			Value: value,
-		})
+		if ob.Properties == nil {
+			ob.Properties = &map[string]string{}
+		}
+		(*ob.Properties)[id] = value
 	}
 }
 

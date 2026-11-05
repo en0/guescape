@@ -15,7 +15,7 @@ type objectBlock struct {
 	Visible 	*bool			`hcl:"visible"`
 	Targetable 	*bool			`hcl:"targetable"`
 	Carriable 	*bool			`hcl:"carriable"`
-	Properties 	[]propertyBlock	`hcl:"property,block"`
+	Properties 	*map[string]string	`hcl:"properties"`
 	Actions 	[]actionBlock	`hcl:"action,block"`
 }
 
@@ -45,11 +45,18 @@ func (o objectBlock) toDomain() (game.Object, error) {
 	if o.Desc != nil {desc = *o.Desc}
 
 	var pm map[game.Identity]string
-	for _, p := range o.Properties {
-		v, err := game.NewIdentity(p.Key)
-		if err != nil {errs = append(errs, err); continue}
-		if pm == nil {pm = make(map[game.Identity]string)}
-		pm[v] = p.Value
+	if o.Properties != nil {
+		for k, v := range *o.Properties {
+			i, err := game.NewIdentity(k)
+			if err != nil {
+				errs = append(errs, err)
+				continue
+			}
+			if pm == nil {
+				pm = make(map[game.Identity]string)
+			}
+			pm[i] = v
+		}
 	}
 
 	var am map[game.ObjectVerb][]game.Rule

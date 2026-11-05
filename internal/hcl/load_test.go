@@ -45,8 +45,8 @@ func TestDecodeWorld(t *testing.T) {
 					visible = false
 					targetable = false
 					carriable = true
-					property "prop-one" {
-						value = "prop-one"
+					properties = {
+						"prop-one" = "prop-one"
 					}
 					action "examine" {
 						rule {

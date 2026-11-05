@@ -38,7 +38,7 @@ func (z zoneBlock) toDomain() (game.Zone, error) {
 type exitBlock struct {
 	Id 		string 		`hcl:"id,label"`
 	ZoneId 	string 		`hcl:"to"`
-	Flags 	[]string 	`hcl:"flags"`
+	Flags 	*[]string 	`hcl:"flags"`
 }
 
 func (e exitBlock) toDomain() (game.ZoneExit, error) {
@@ -48,7 +48,7 @@ func (e exitBlock) toDomain() (game.ZoneExit, error) {
 	if err != nil {errs = append(errs, err)}
 
 	var flags []game.Identity
-	for _, f := range e.Flags {
+	for _, f := range *e.Flags {
 		v, err := game.NewIdentity(f)
 		if err != nil {errs = append(errs, err); continue}
 		flags = append(flags, v)

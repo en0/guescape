@@ -7,16 +7,11 @@ import (
 )
 
 type modeBlock struct {
-	Id 		string			`hcl:"id,label"`
-	Prompt	*string			`hcl:"prompt"`
-	Lua 	*string			`hcl:"lua"`
-	States 	[]stateBlock	`hcl:"state,block"`
+	Id 		string				`hcl:"id,label"`
+	Prompt	*string				`hcl:"prompt"`
+	Lua 	*string				`hcl:"lua"`
+	States  *map[string]string 	`hcl:"state"`
 	luaScript game.CompiledScript
-}
-
-type stateBlock struct {
-	Id 		string	`hcl:"id,label"`
-	Value	string	`hcl:"value"`
 }
 
 func (m modeBlock) toDomain() (game.Mode, error) {
@@ -26,8 +21,8 @@ func (m modeBlock) toDomain() (game.Mode, error) {
 		errs = append(errs, err)
 	}
 	var states map[game.Identity]string
-	for _, sb := range m.States {
-		sid, err := game.NewIdentity(sb.Id)
+	for k, v := range *m.States {
+		s, err := game.NewIdentity(k)
 		if err != nil {
 			errs = append(errs, err)
 			continue
@@ -35,7 +30,7 @@ func (m modeBlock) toDomain() (game.Mode, error) {
 		if states == nil {
 			states = make(map[game.Identity]string)
 		}
-		states[sid] = sb.Value
+		states[s] = v
 	}
 	var prompt string
 	if m.Prompt != nil {

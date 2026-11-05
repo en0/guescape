@@ -18,11 +18,13 @@ game {
 
   mode "mode-one" {
     prompt = "username: "
-    state "s" { value = "login" }
-    state "user" { value = "zerocool" }
-    state "pw" { value = "abc123" }
-    state "cwd" { value = "~" }
-    state "last" { value = "" }
+    state = {
+      "s" = "login"
+      "user" = "zerocool"
+      "pw" = "abc123"
+      "cwd" = "~"
+      "last" = ""
+    }
     lua = <<-LUA
       local function input() return table.concat(args) end
 
@@ -130,8 +132,8 @@ game {
     targetable  = true
     carriable   = false
 
-    property "lock" {
-      value = "locked"
+    properties = {
+      "lock" = "locked"
     }
 
     action "use" {
