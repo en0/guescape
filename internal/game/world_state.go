@@ -100,13 +100,13 @@ func (ws WorldState) HasFlag(id Identity) bool {
 	})
 }
 
-// Retrieve, from the given object, the value of the given property.
-func (ws WorldState) ObjectProperty(objId Identity, propertyId Identity) (string, bool) {
+// Retrieve, from the given object, the value of the given state.
+func (ws WorldState) ObjectState(objId Identity, stateId Identity) (string, bool) {
 	obj, found := ws.object(objId)
 	if !found {
 		return "", false
 	}
-	return obj.property(propertyId)
+	return obj.state(stateId)
 }
 
 // Retrieve, from the given mode, the value of the given state.

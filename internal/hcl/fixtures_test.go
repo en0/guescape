@@ -73,12 +73,12 @@ func withObjectCarriable(value bool) testOptions[objectBlock] {
 	return func(ob *objectBlock) {ob.Carriable = &value}
 }
 
-func withObjectProperty(id string, value string) testOptions[objectBlock] {
+func withObjectState(id string, value string) testOptions[objectBlock] {
 	return func(ob *objectBlock) {
-		if ob.Properties == nil {
-			ob.Properties = &map[string]string{}
+		if ob.States == nil {
+			ob.States = &map[string]string{}
 		}
-		(*ob.Properties)[id] = value
+		(*ob.States)[id] = value
 	}
 }
 
@@ -127,9 +127,9 @@ func withFlagCondition(id string, value bool) testOptions[conditionGroupBlock] {
 	}
 }
 
-func withPropCondition(id string, value string) testOptions[conditionGroupBlock] {
+func withObjectStateCondition(id string, value string) testOptions[conditionGroupBlock] {
 	return func(wb *conditionGroupBlock) {
-		wb.PropertyConditions = append(wb.PropertyConditions, propertyConditionBlock{
+		wb.ObjectStateConditions = append(wb.ObjectStateConditions, objectStateConditionBlock{
 			Id: id,
 			Value: value,
 		})

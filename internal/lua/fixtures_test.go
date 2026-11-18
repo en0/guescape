@@ -32,8 +32,8 @@ func testMockScriptContextFromContext(c *MockScriptContext) (*MockScriptContext)
 	if c != nil {
 		return testMockScriptContext(
 			c.hasFlag,
-			c.propertyString,
-			c.propertyBool,
+			c.objectStateString,
+			c.objectStateBool,
 			c.stateString,
 			c.stateBool,
 			c.currentModeId,
@@ -44,16 +44,16 @@ func testMockScriptContextFromContext(c *MockScriptContext) (*MockScriptContext)
 
 func testMockScriptContext(
 	hasFlag bool,
-	propertyString string,
-	propertyBool bool,
+	objectStateString string,
+	objectStateBool bool,
 	stateString string,
 	stateBool bool,
 	currentModeId game.Identity,
 ) (*MockScriptContext) {
 	return &MockScriptContext{
 		hasFlag: hasFlag,
-		propertyString: propertyString,
-		propertyBool: propertyBool,
+		objectStateString: objectStateString,
+		objectStateBool: objectStateBool,
 		stateString: stateString,
 		stateBool: stateBool,
 		currentModeId: currentModeId,
@@ -62,15 +62,15 @@ func testMockScriptContext(
 
 type MockScriptContext struct {
 	hasFlag bool
-	propertyString string
-	propertyBool bool
+	objectStateString string
+	objectStateBool bool
 	stateString string
 	stateBool bool
 	currentModeId game.Identity
 	hasFlagCalled bool
 	hasFlagCalledWith game.Identity
-	propertyCalled bool
-	propertyCalledWith []game.Identity
+	objectStateCalled bool
+	objectStateCalledWith []game.Identity
 	stateCalled bool
 	stateCalledWith []game.Identity
 }
@@ -81,10 +81,10 @@ func (m *MockScriptContext) HasFlag(flagId game.Identity) bool {
 	return m.hasFlag
 }
 
-func (m *MockScriptContext) ObjectProperty(objId game.Identity, propId game.Identity) (string, bool) {
-	m.propertyCalled = true
-	m.propertyCalledWith = []game.Identity{objId, propId}
-	return m.propertyString, m.propertyBool
+func (m *MockScriptContext) ObjectState(objId game.Identity, stateId game.Identity) (string, bool) {
+	m.objectStateCalled = true
+	m.objectStateCalledWith = []game.Identity{objId, stateId}
+	return m.objectStateString, m.objectStateBool
 }
 
 func (m *MockScriptContext) ModeState(modeId game.Identity, state game.Identity) (string, bool) {

@@ -63,8 +63,8 @@ func TestRunLua(t *testing.T) {
 			expectErr: ErrExecuteScript,
 		},
 		{
-			name: "get-state-calls-ctx",
-			lua: `getState("state-one")`,
+			name: "get-mode-state-calls-ctx",
+			lua: `getModeState("mode-one", "state-one")`,
 			ctxSpy: &MockScriptContext{
 				currentModeId: testIdentity(t, "mode-one"),
 				stateString: "state-one-value",
@@ -74,28 +74,31 @@ func TestRunLua(t *testing.T) {
 			},
 		},
 		{
-			name: "get-state-err-causes-abort",
-			lua: `getState("state1")`,
+			name: "get-mode-state-err-causes-abort",
+			lua: `getModeState("mode-one", "state1")`,
+			ctxSpy: &MockScriptContext{
+				currentModeId: testIdentity(t, "mode-one"),
+			},
 			expectErr: ErrExecuteScript,
 		},
 		{
-			name: "get-property-calls-ctx",
-			lua: `getProperty("obj-one", "prop-one")`,
+			name: "get-object-state-calls-ctx",
+			lua: `getObjectState("obj-one", "state-one")`,
 			ctxSpy: &MockScriptContext{
-				propertyString: "prop-one-value",
-				propertyBool: true,
-				propertyCalled: true,
-				propertyCalledWith: testIdentities(t, "obj-one", "prop-one"),
+				objectStateString: "state-one-value",
+				objectStateBool: true,
+				objectStateCalled: true,
+				objectStateCalledWith: testIdentities(t, "obj-one", "state-one"),
 			},
 		},
 		{
-			name: "get-property-obj-err-causes-abort",
-			lua: `getProperty("obj1", "state-one")`,
+			name: "get-object-state-obj-err-causes-abort",
+			lua: `getObjectState("obj1", "state-one")`,
 			expectErr: ErrExecuteScript,
 		},
 		{
-			name: "get-property-state-err-causes-abort",
-			lua: `getProperty("obj-one", "state1")`,
+			name: "get-object-state-err-causes-abort",
+			lua: `getObjectState("obj-one", "state1")`,
 			expectErr: ErrExecuteScript,
 		},
 		{
@@ -169,13 +172,13 @@ func TestRunLua(t *testing.T) {
 			},
 		},
 		{
-			name: "set-property-effect",
-			lua: `setProperty("obj-one", "prop-one", "prop-one-value")`,
+			name: "set-object-state-effect",
+			lua: `setObjectState("obj-one", "state-one", "state-one-value")`,
 			expectEffects: []game.Effect{
-				game.ObjectPropertyEffect{
+				game.SetObjectStateEffect{
 					ObjectId: testIdentity(t, "obj-one"),
-					PropertyId: testIdentity(t, "prop-one"),
-					Value: "prop-one-value",
+					StateId: testIdentity(t, "state-one"),
+					Value: "state-one-value",
 				},
 			},
 		},
@@ -231,9 +234,9 @@ func TestRunLua(t *testing.T) {
 		},
 		{
 			name: "set-mode-effect",
-			lua: `setMode("mode-one")`,
+			lua: `activateMode("mode-one")`,
 			expectEffects: []game.Effect{
-				game.SetModeEffect{
+				game.ActivateModeEffect{
 					ModeId: testIdentity(t, "mode-one"),
 				},
 			},
@@ -246,8 +249,8 @@ func TestRunLua(t *testing.T) {
 			},
 		},
 		{
-			name: "set-state-effect",
-			lua: `setState("state-one", "state-one-value")`,
+			name: "set-mode-state-effect",
+			lua: `setModeState("mode-one", "state-one", "state-one-value")`,
 			ctxSpy: &MockScriptContext{
 				currentModeId: testIdentity(t, "mode-one"),
 			},
@@ -279,6 +282,31 @@ func TestRunLua(t *testing.T) {
 			expectEffects: []game.Effect{
 				game.SayEffect{Text: "hello,"},
 				game.SayEffect{Text: "lua!"},
+			},
+		},
+		{
+			name: "get-state-calls-ctx-shorthand",
+			lua: `get("state-one")`,
+			ctxSpy: &MockScriptContext{
+				currentModeId: testIdentity(t, "mode-one"),
+				stateString: "state-one-value",
+				stateBool: true,
+				stateCalled: true,
+				stateCalledWith: testIdentities(t, "mode-one", "state-one"),
+			},
+		},
+		{
+			name: "set-mode-state-effect-shorthand",
+			lua: `set("state-one", "state-one-value")`,
+			ctxSpy: &MockScriptContext{
+				currentModeId: testIdentity(t, "mode-one"),
+			},
+			expectEffects: []game.Effect{
+				game.SetModeStateEffect{
+					ModeId: testIdentity(t, "mode-one"),
+					State: testIdentity(t, "state-one"),
+					Value: "state-one-value",
+				},
 			},
 		},
 	}

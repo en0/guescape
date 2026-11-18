@@ -45,14 +45,14 @@ func TestDecodeWorld(t *testing.T) {
 					visible = false
 					targetable = false
 					carriable = true
-					properties = {
-						"prop-one" = "prop-one"
+					states = {
+						"state-one" = "state-one"
 					}
 					action "examine" {
 						rule {
 							when {
-								property "prop-one" {
-									value = "prop-one"
+								state "state-one" {
+									value = "state-one"
 								}
 								flag "flag-one" {
 									value = true
@@ -81,7 +81,7 @@ func TestDecodeWorld(t *testing.T) {
 						withObjectTargetable(false),
 						withObjectCarriable(true),
 						withObjectDesc("object-one"),
-						withObjectProperty("prop-one", "prop-one"),
+						withObjectState("state-one", "state-one"),
 						withObjectActions(
 							testActionBlock(t, "examine",
 								testRuleBlock(t,
@@ -91,7 +91,7 @@ func TestDecodeWorld(t *testing.T) {
 									),
 									withRuleConditions(t,
 										testWhenBlock(t,
-											withPropCondition("prop-one", "prop-one"),
+											withObjectStateCondition("state-one", "state-one"),
 											withFlagCondition("flag-one", true),
 											withUseCondition("item-one"),
 										),

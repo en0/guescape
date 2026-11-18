@@ -313,7 +313,7 @@ func TestPlanEffects(t *testing.T) {
 			action: NewObjectAction(VerbUse, testIdentity(t, "object-one")),
 			expect: []Effect{SayEffect{"flag-present"}},
 		}, {
-			name: "custom-use-with-property-condition-unmet",
+			name: "custom-use-with-object-state-condition-unmet",
 			state: WorldState{
 				currentZoneId: testIdentity(t, "zone-one"),
 				zones: []Zone{testZone(t, "zone-one")},
@@ -322,7 +322,7 @@ func TestPlanEffects(t *testing.T) {
 						testRule(t,
 							[]Effect{SayEffect{"custom-action"}},
 							testWithConditionGroups(testConditionGroup(t,
-								testWithPropertyCondition(t, "prop-one", "foo"),
+								testWithObjectStateCondition(t, "state-one", "foo"),
 							)),
 						),
 					)),
@@ -331,19 +331,19 @@ func TestPlanEffects(t *testing.T) {
 			action: NewObjectAction(VerbUse, testIdentity(t, "object-one")),
 			expect: []Effect{SayEffect{msgDefaults[MsgNoHandler]}},
 		}, {
-			name: "custom-use-with-property-condition-met",
+			name: "custom-use-with-object-state-condition-met",
 			state: WorldState{
 				currentZoneId: testIdentity(t, "zone-one"),
 				zones: []Zone{testZone(t, "zone-one")},
 				objects: []Object{
 					testObject(
 						t, "object-one", "zone-one",
-						testWithObjectProperty(t, "prop-one", "foo"),
+						testWithObjectState(t, "state-one", "foo"),
 						testWithObjectAction(VerbUse,
 							testRule(t,
-								[]Effect{SayEffect{"has-property-foo"}},
+								[]Effect{SayEffect{"has-object-state-foo"}},
 								testWithConditionGroups(testConditionGroup(t,
-									testWithPropertyCondition(t, "prop-one", "foo"),
+									testWithObjectStateCondition(t, "state-one", "foo"),
 								)),
 							),
 						),
@@ -351,7 +351,7 @@ func TestPlanEffects(t *testing.T) {
 				},
 			},
 			action: NewObjectAction(VerbUse, testIdentity(t, "object-one")),
-			expect: []Effect{SayEffect{"has-property-foo"}},
+			expect: []Effect{SayEffect{"has-object-state-foo"}},
 		}, {
 			name: "custom-use-with-item-condition-unmet",
 			state: WorldState{
@@ -400,12 +400,12 @@ func TestPlanEffects(t *testing.T) {
 					testObject(t, "item-one", testInventoryZoneId),
 					testObject(
 						t, "object-one", "zone-one",
-						testWithObjectProperty(t, "prop-one", "foo"),
+						testWithObjectState(t, "state-one", "foo"),
 						testWithObjectAction(VerbUse,
 							testRule(t,
 								[]Effect{SayEffect{"should-not-see-this"}},
 								testWithConditionGroups(testConditionGroup(t,
-									testWithPropertyCondition(t, "prop-one", "foo"),
+									testWithObjectStateCondition(t, "state-one", "foo"),
 									testWithFlagCondition(t, "flag-one", true),
 								)),
 							),
@@ -413,7 +413,7 @@ func TestPlanEffects(t *testing.T) {
 								[]Effect{SayEffect{"has-all-the-things"}},
 								testWithConditionGroups(testConditionGroup(t,
 									testWithUseWithCondition(t, "item-one"),
-									testWithPropertyCondition(t, "prop-one", "foo"),
+									testWithObjectStateCondition(t, "state-one", "foo"),
 									testWithFlagCondition(t, "flag-one", true),
 								)),
 							),

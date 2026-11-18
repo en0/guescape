@@ -11,9 +11,9 @@ var errObjectLocationEffectObjectNotFound = errors.New("object location effect r
 var errObjectTargetableEffectObjectNotFound = errors.New("object targetable effect references an unknown object")
 var errObjectVisibleEffectObjectNotFound = errors.New("object visible effect references an unknown object")
 var errObjectCarriableEffectObjectNotFound = errors.New("object carriable effect references an unknown object")
-var errObjectPropertyEffectObjectNotFound = errors.New("object property effect references an unknown object")
-var errObjectPropertyEffectPropertyNotFound = errors.New("object property effect references an unknown property")
-var errPropertyConditionPropertyNotFound = errors.New("property condition references an unknown property")
+var errObjectStateEffectObjectNotFound = errors.New("object state effect references an unknown object")
+var errObjectStateEffectStateNotFound = errors.New("object state effect references an unknown object state")
+var errObjectStateConditionStateNotFound = errors.New("object state condition references an unknown object state")
 var errUseWithConditionObjectNotFound = errors.New("use with condition references an unknown object")
 var errExitZoneNotFound = errors.New("zone exit references an unknown zone")
 var errStartZoneNotFound = errors.New("start zone references an unknown zone")
@@ -109,23 +109,23 @@ func validateEffects(ws WorldState) []error {
 								Referent: e.ObjectId,
 							})
 						}
-					case ObjectPropertyEffect:
+					case SetObjectStateEffect:
 						obj, found := ws.object(e.ObjectId)
 						if !found {
 							errs = append(errs, ReferenceError{
-								kind: errObjectPropertyEffectObjectNotFound,
+								kind: errObjectStateEffectObjectNotFound,
 								Referrer: o.id,
 								Referent: e.ObjectId,
 							})
-						} else if !obj.hasProperty(e.PropertyId) {
+						} else if !obj.hasState(e.StateId) {
 							errs = append(errs, ReferenceError{
-								kind: errObjectPropertyEffectPropertyNotFound,
+								kind: errObjectStateEffectStateNotFound,
 								Referrer: o.id,
 								Scope: e.ObjectId,
-								Referent: e.PropertyId,
+								Referent: e.StateId,
 							})
 						}
-					case SetModeEffect:
+					case ActivateModeEffect:
 						if !ws.hasMode(e.ModeId) {
 							errs = append(errs, ReferenceError{
 								kind: errModeEffectModeNotFound,
@@ -178,10 +178,10 @@ func validateConditionGroups(ws WorldState) []error {
 							Referent: c.useWith,
 						})
 					}
-					for _, p := range c.properties {
-						if !o.hasProperty(p.id) {
+					for _, p := range c.states {
+						if !o.hasState(p.id) {
 							errs = append(errs, ReferenceError{
-								kind: errPropertyConditionPropertyNotFound,
+								kind: errObjectStateConditionStateNotFound,
 								Referrer: o.id,
 								Referent: p.id,
 							})

@@ -19,7 +19,7 @@ func TestApply(t *testing.T) {
 					testWithObjectVisibility(true),
 					testWithObjectTargetability(true),
 					testWithObjectCarriability(true),
-					testWithObjectProperty(t, "prop-exists", "old-val"),
+					testWithObjectState(t, "state-exists", "old-val"),
 				),
 			},
 			testWithWorldStateModes(t, true,
@@ -90,35 +90,35 @@ func TestApply(t *testing.T) {
 			},
 		},
 		{
-			name: "object-property-effect-sets-property-value",
-			ef: ObjectPropertyEffect{
+			name: "object-state-effect-sets-state-value",
+			ef: SetObjectStateEffect{
 				ObjectId: testIdentity(t, "obj-exists"),
-				PropertyId: testIdentity(t, "prop-exists"),
+				StateId: testIdentity(t, "state-exists"),
 				Value: "new-value",
 			},
 			check: func(ws WorldState, err error) bool {
 				obj, found := ws.object(testIdentity(t, "obj-exists"))
 				if !found {return false}
-				prop, found := obj.property(testIdentity(t, "prop-exists"))
+				state, found := obj.state(testIdentity(t, "state-exists"))
 				if !found {return false}
-				return prop == "new-value"
+				return state == "new-value"
 			},
 		},
 		{
-			name: "object-property-effect-targeting-missing-object-is-an-error",
+			name: "object-state-effect-targeting-missing-object-is-an-error",
 			err: errEffectObjectNotFound,
-			ef: ObjectPropertyEffect{
+			ef: SetObjectStateEffect{
 				ObjectId: testIdentity(t, "obj-no-exists"),
-				PropertyId: testIdentity(t, "prop-exists"),
+				StateId: testIdentity(t, "state-exists"),
 				Value: "new-value",
 			},
 		},
 		{
-			name: "object-property-effect-targeting-missing-property-is-an-error",
-			err: errEffectPropertyNotFound,
-			ef: ObjectPropertyEffect{
+			name: "object-state-effect-targeting-missing-state-is-an-error",
+			err: errEffectObjectStateNotFound,
+			ef: SetObjectStateEffect{
 				ObjectId: testIdentity(t, "obj-exists"),
-				PropertyId: testIdentity(t, "prop-no-exists"),
+				StateId: testIdentity(t, "state-no-exists"),
 				Value: "new-value",
 			},
 		},
@@ -186,7 +186,7 @@ func TestApply(t *testing.T) {
 		},
 		{
 			name: "set-mode-effect-sets-current-mode-id",
-			ef: SetModeEffect{
+			ef: ActivateModeEffect{
 				ModeId: testIdentity(t, "mode-two"),
 			},
 			check: func(ws WorldState, err error) bool {

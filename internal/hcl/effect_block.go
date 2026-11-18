@@ -68,25 +68,25 @@ func (e removeFlagEffectBlock) toDomain() (game.Effect, error) {
 	return game.RemoveFlagEffect{Flag: id}, err
 }
 
-// objectPropertyEffectBlock
+// objectStateEffectBlock
 
-type objectPropertyEffectBlock struct {
+type objectStateEffectBlock struct {
 	ObjectId	string	`hcl:"object_id"`
-	PropertyId 	string	`hcl:"property_id"`
+	StateId 	string	`hcl:"state_id"`
 	Value      	string	`hcl:"value"`
 }
 
-func (objectPropertyEffectBlock) isEffect() { }
+func (objectStateEffectBlock) isEffect() { }
 
-func (e objectPropertyEffectBlock) toDomain() (game.Effect, error) {
+func (e objectStateEffectBlock) toDomain() (game.Effect, error) {
 	var errs []error
 	oid, err := game.NewIdentity(e.ObjectId)
 	if err != nil {errs = append(errs, err)}
-	pid, err := game.NewIdentity(e.PropertyId)
+	pid, err := game.NewIdentity(e.StateId)
 	if err != nil {errs = append(errs, err)}
-	return game.ObjectPropertyEffect{
+	return game.SetObjectStateEffect{
 		ObjectId: oid,
-		PropertyId: pid,
+		StateId: pid,
 		Value: e.Value,
 	}, errors.Join(errs...)
 }
@@ -179,17 +179,17 @@ func (e endGameEffectBlock) toDomain() (game.Effect, error) {
 	}, nil
 }
 
-// setModeEffectBlock
+// activateModeEffectBlock
 
-type setModeEffectBlock struct {
+type activateModeEffectBlock struct {
 	ModeId 	string 	`hcl:"mode_id"`
 }
 
-func (setModeEffectBlock) isEffect() {}
+func (activateModeEffectBlock) isEffect() {}
 
-func (e setModeEffectBlock) toDomain() (game.Effect, error){
+func (e activateModeEffectBlock) toDomain() (game.Effect, error){
 	id, err := game.NewIdentity(e.ModeId)
-	return game.SetModeEffect{ModeId: id}, err
+	return game.ActivateModeEffect{ModeId: id}, err
 }
 
 // clearModeEffectBlock

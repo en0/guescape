@@ -234,31 +234,31 @@ func TestHasFlag(t *testing.T) {
 	}
 }
 
-func TestObjectProperty(t *testing.T) {
+func TestObjectState(t *testing.T) {
 	tests := []struct{
 		name string
 		obj string
-		property string
+		state string
 		value string
 		found bool
 		ws WorldState
 	}{
 		{
-			name: "object-property-returns-property-value-when-present",
+			name: "object-state-returns-state-value-when-present",
 			obj: "obj-one",
-			property: "prop-one",
-			value: "prop-one-value",
+			state: "state-one",
+			value: "state-one-value",
 			found: true,
 			ws: WorldState{
 				objects: []Object{
-					testObject(t, "obj-one", "zone-one", testWithObjectProperty(t, "prop-one", "prop-one-value")),
+					testObject(t, "obj-one", "zone-one", testWithObjectState(t, "state-one", "state-one-value")),
 				},
 			},
 		},
 		{
-			name: "object-property-returns-not-found-when-property-not-present",
+			name: "object-state-returns-not-found-when-state-not-present",
 			obj: "obj-one",
-			property: "prop-one",
+			state: "state-one",
 			value: "",
 			found: false,
 			ws: WorldState{
@@ -268,9 +268,9 @@ func TestObjectProperty(t *testing.T) {
 			},
 		},
 		{
-			name: "object-property-returns-not-found-when-property-not-present",
+			name: "object-state-returns-not-found-when-state-not-present",
 			obj: "obj-one",
-			property: "prop-one",
+			state: "state-one",
 			value: "",
 			found: false,
 			ws: WorldState{
@@ -280,9 +280,9 @@ func TestObjectProperty(t *testing.T) {
 			},
 		},
 		{
-			name: "object-property-returns-not-found-when-object-not-present",
+			name: "object-state-returns-not-found-when-object-not-present",
 			obj: "obj-one",
-			property: "prop-one",
+			state: "state-one",
 			value: "",
 			found: false,
 			ws: WorldState{},
@@ -291,10 +291,10 @@ func TestObjectProperty(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			objId := testIdentity(t, tt.obj)
-			propId := testIdentity(t, tt.property)
-			actual, found := tt.ws.ObjectProperty(objId, propId)
+			stateId := testIdentity(t, tt.state)
+			actual, found := tt.ws.ObjectState(objId, stateId)
 			if found != tt.found || actual != tt.value {
-				t.Fatalf("ws.ObjectProperty(%v, %v) (%v, %v) want (%v, %v)", tt.obj, tt.property, actual, found, tt.value, tt.found)
+				t.Fatalf("ws.ObjectState(%v, %v) (%v, %v) want (%v, %v)", tt.obj, tt.state, actual, found, tt.value, tt.found)
 			}
 		})
 	}

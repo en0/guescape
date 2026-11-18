@@ -29,19 +29,19 @@ game {
       local function input() return table.concat(args) end
 
       local function doLogin()
-          setState("last", input())
-          setState("s", "login-password")
+          set("last", input())
+          set("s", "login-password")
           setPrompt("password: ")
       end
 
       local function doPassword()
-          if getState("last") == getState("user") and input() == getState("pw") then
-              setState("s", "term")
-              setPrompt(getState("user").."@mode "..getState("cwd").." $ ")
+          if get("last") == get("user") and input() == get("pw") then
+              set("s", "term")
+              setPrompt(get("user").."@mode "..get("cwd").." $ ")
           else
               clearMode()
               setPrompt("username: ")
-              setState("s", "login")
+              set("s", "login")
               say("Wrong username or password")
           end
       end
@@ -66,7 +66,7 @@ game {
           ["term"] = doTerm,
       }
 
-      local h = states[getState("s")]
+      local h = states[get("s")]
       if h then h() end
     LUA
   }
@@ -76,7 +76,7 @@ game {
     desc = "an old computer"
     action "use" {
       rule {
-        effect "set_mode" {
+        effect "activate_mode" {
           mode_id = "mode-one"
         }
       }
@@ -132,7 +132,7 @@ game {
     targetable  = true
     carriable   = false
 
-    properties = {
+    state = {
       "lock" = "locked"
     }
 
@@ -141,7 +141,7 @@ game {
       # The door is locked and key not used -> say
       rule {
         when {
-          property "lock" {
+          state "lock" {
             value = "locked"
           }
         }
@@ -154,7 +154,7 @@ game {
       rule {
         when {
           use_with = "brass-key"
-          property "lock" {
+          state "lock" {
             value = "locked"
           }
         }
@@ -164,9 +164,9 @@ game {
         effect "say" {
           text = "the door opens"
         }
-        effect "property" {
+        effect "object_state" {
           object_id   = "door"
-          property_id = "lock"
+          state_id = "lock"
           value       = "unlocked"
         }
         effect "add_flag" {
@@ -177,7 +177,7 @@ game {
       # The door is unlocked. the key is not used -> say
       rule {
         when {
-          property "lock" {
+          state "lock" {
             value = "unlocked"
           }
         }
@@ -190,7 +190,7 @@ game {
       rule {
         when {
           use_with = "brass-key"
-          property "lock" {
+          state "lock" {
             value = "unlocked"
           }
         }
@@ -200,9 +200,9 @@ game {
         effect "say" {
           text = "the door is locked"
         }
-        effect "property" {
+        effect "object_state" {
           object_id   = "door"
-          property_id = "lock"
+          state_id = "lock"
           value       = "locked"
         }
         effect "remove_flag" {

@@ -1,14 +1,14 @@
 package game
 
-// PropertyCondition matches an object property against an expected value.
-type PropertyCondition struct {
+// StateCondition matches an object state against an expected value.
+type StateCondition struct {
 	id  	Identity
 	value 	string
 }
 
-// NewPropertyCondition returns a PropertyCondition for the given property and value.
-func NewPropertyCondition(id Identity, value string) PropertyCondition {
-	return PropertyCondition{id: id, value: value}
+// NewStateCondition returns a ObjectStateCondition for the given state and value.
+func NewStateCondition(id Identity, value string) StateCondition {
+	return StateCondition{id: id, value: value}
 }
 
 // FlagCondition matches if a flag is present in the world.
@@ -22,10 +22,10 @@ func NewFlagCondition(id Identity, value bool) FlagCondition {
 	return FlagCondition{id: id, value: value}
 }
 
-// ConditionGroup matches when useWith and all flag and property conditions match.
+// ConditionGroup matches when useWith and all flag and state conditions match.
 //A nil useWith matches when no item is used.
 type ConditionGroup struct {
-	properties []PropertyCondition // All must match
+	states 	   []StateCondition // All must match
 	flags      []FlagCondition     // All must match
 	useWith    Identity            // Must match, if specified
 }
@@ -34,23 +34,23 @@ type ConditionGroup struct {
 func NewConditionGroup(
 	useWith 			Identity,
 	flagConditions 		[]FlagCondition,
-	propertyConditions 	[]PropertyCondition,
+	stateConditions 	[]StateCondition,
 ) ConditionGroup {
 	return ConditionGroup{
 		useWith: 	useWith,
 		flags: 		flagConditions,
-		properties: propertyConditions,
+		states: stateConditions,
 	}
 }
 
 func (cg ConditionGroup) matches(ws WorldState, obj Object, itemId Identity) bool {
-	allProperties := existsAll(cg.properties, func(pc PropertyCondition) bool {
-		p, ok := obj.property(pc.id)
-		return ok && p == pc.value
+	allStates := existsAll(cg.states, func(sc StateCondition) bool {
+		s, ok := obj.state(sc.id)
+		return ok && s == sc.value
 	})
 	allFlags := existsAll(cg.flags, func(fc FlagCondition) bool {
 		return ws.HasFlag(fc.id) == fc.value
 	})
-	return cg.useWith == itemId && allProperties && allFlags
+	return cg.useWith == itemId && allStates && allFlags
 }
 

@@ -15,11 +15,11 @@ type objectBlock struct {
 	Visible 	*bool			`hcl:"visible"`
 	Targetable 	*bool			`hcl:"targetable"`
 	Carriable 	*bool			`hcl:"carriable"`
-	Properties 	*map[string]string	`hcl:"properties"`
+	States 	*map[string]string	`hcl:"state"`
 	Actions 	[]actionBlock	`hcl:"action,block"`
 }
 
-type propertyBlock struct {
+type objectStateBlock struct {
 	Key 	string	`hcl:"id,label"`
 	Value 	string	`hcl:"value"`
 }
@@ -45,8 +45,8 @@ func (o objectBlock) toDomain() (game.Object, error) {
 	if o.Desc != nil {desc = *o.Desc}
 
 	var pm map[game.Identity]string
-	if o.Properties != nil {
-		for k, v := range *o.Properties {
+	if o.States != nil {
+		for k, v := range *o.States {
 			i, err := game.NewIdentity(k)
 			if err != nil {
 				errs = append(errs, err)

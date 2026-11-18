@@ -96,14 +96,14 @@ func testWithObjectCarriability(v bool) testOption[Object] {
 	return func(o *Object) {o.carriable = v}
 }
 
-func testWithObjectProperty(t *testing.T, prop string, value string) testOption[Object] {
+func testWithObjectState(t *testing.T, state string, value string) testOption[Object] {
 	t.Helper()
-	n := testIdentity(t, prop)
+	n := testIdentity(t, state)
 	return func(o *Object) {
-		if o.properties == nil {
-			o.properties = make(map[Identity]string)
+		if o.states == nil {
+			o.states = make(map[Identity]string)
 		}
-		o.properties[n] = value
+		o.states[n] = value
 	}
 }
 
@@ -158,11 +158,11 @@ func testWithUseWithCondition(t *testing.T, item string) testOption[ConditionGro
 	return func(cg *ConditionGroup) {cg.useWith = id}
 }
 
-func testWithPropertyCondition(t *testing.T, prop string, value string) testOption[ConditionGroup] {
+func testWithObjectStateCondition(t *testing.T, state string, value string) testOption[ConditionGroup] {
 	t.Helper()
-	id := testIdentity(t, prop)
+	id := testIdentity(t, state)
 	return func(cg *ConditionGroup) {
-		cg.properties = append(cg.properties, NewPropertyCondition(id, value))
+		cg.states = append(cg.states, NewStateCondition(id, value))
 	}
 }
 

@@ -33,16 +33,16 @@ type RemoveFlagEffect struct {
 }
 func (RemoveFlagEffect) isEffect() {}
 
-// ObjectPropertyEffect sets a property on an object.
-type ObjectPropertyEffect struct {
+// SetObjectStateEffect sets a state on an object.
+type SetObjectStateEffect struct {
 	// ObjectId is the target object.
 	ObjectId 	Identity
-	// PropertyId is the property to set.
-	PropertyId 	Identity
+	// StateId is the state to set.
+	StateId 	Identity
 	// Value is the value to set.
 	Value 		string
 }
-func (ObjectPropertyEffect) isEffect() {}
+func (SetObjectStateEffect) isEffect() {}
 
 // ObjectVisibleEffect sets whether an object is visible.
 type ObjectVisibleEffect struct {
@@ -88,11 +88,11 @@ type EndGameEffect struct {
 func (EndGameEffect) isEffect() {}
 
 // Set an active mode.
-type SetModeEffect struct {
+type ActivateModeEffect struct {
 	/// ModeId is the mode to set.
 	ModeId Identity
 }
-func (SetModeEffect) isEffect() {}
+func (ActivateModeEffect) isEffect() {}
 
 // Clears the active mode.
 type ClearModeEffect struct { }

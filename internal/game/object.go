@@ -8,7 +8,7 @@ type Object struct {
 	visible    bool
 	targetable bool
 	carriable  bool
-	properties map[Identity]string
+	states map[Identity]string
 	actions    map[ObjectVerb][]Rule
 }
 
@@ -16,13 +16,13 @@ func (o Object) inInventory() bool {
 	return o.zoneId == InventoryZoneId
 }
 
-func (o Object) property(id Identity) (string, bool) {
-	result, ok := o.properties[id]
+func (o Object) state(id Identity) (string, bool) {
+	result, ok := o.states[id]
 	return result, ok
 }
 
-func (o Object) hasProperty(id Identity) bool {
-	_, ok := o.property(id)
+func (o Object) hasState(id Identity) bool {
+	_, ok := o.state(id)
 	return ok
 }
 
@@ -35,7 +35,7 @@ func NewObject(
 	visible 	*bool,
 	targetable 	*bool,
 	carriable 	*bool,
-	properties 	map[Identity]string,
+	states 		map[Identity]string,
 	actions 	map[ObjectVerb][]Rule,
 ) (Object){
 	ptr := func (b bool) *bool {return &b}
@@ -49,7 +49,7 @@ func NewObject(
 		visible: 	*visible,
 		targetable: *targetable,
 		carriable: 	*carriable,
-		properties: properties,
+		states: states,
 		actions: 	actions,
 	}
 }

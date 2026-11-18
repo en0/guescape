@@ -38,17 +38,17 @@ func TestValidateWorldState(t *testing.T) {
 				},
 				objects: []Object{
 					testObject(t, "obj-one", "zone-one",
-						testWithObjectProperty(t, "prop-one", "prop-one-val"),
+						testWithObjectState(t, "state-one", "state-one-val"),
 					),
 					testObject(t, "obj-two", "zone-two",
 						testWithObjectAction(VerbUse,
 							testRule(t,
 								[]Effect{
-									SayEffect{"set prop on obj-one"},
-									ObjectPropertyEffect{
+									SayEffect{"set state on obj-one"},
+									SetObjectStateEffect{
 										ObjectId: testIdentity(t, "obj-one"),
-										PropertyId: testIdentity(t, "prop-one"),
-										Value: "prop-one-val2",
+										StateId: testIdentity(t, "state-one"),
+										Value: "state-one-val2",
 									},
 								},
 								testWithConditionGroups(
@@ -244,21 +244,21 @@ func TestValidateEffects(t *testing.T) {
 			},
 		},
 
-		// ObjectPropertyEffect Tests
+		// ObjectStateEffect Tests
 		{
-			name: "object-property-effect-object-must-exist",
-			err: errObjectPropertyEffectObjectNotFound,
+			name: "object-state-effect-object-must-exist",
+			err: errObjectStateEffectObjectNotFound,
 			state: WorldState{
 				zones: []Zone{testZone(t, "zone-one")},
 				objects: []Object{
 					testObject(
 						t, "obj-one", "zone-one",
-						testWithObjectProperty(t, "prop-one", "prop-one-val"),
+						testWithObjectState(t, "state-one", "state-one-val"),
 						testWithObjectAction(VerbUse,
 							testRule(t, []Effect{
-								ObjectPropertyEffect{
+								SetObjectStateEffect{
 									ObjectId: testIdentity(t, "obj-no-exist"),
-									PropertyId: testIdentity(t, "prop-one"),
+									StateId: testIdentity(t, "state-one"),
 								},
 							}),
 						),
@@ -267,19 +267,19 @@ func TestValidateEffects(t *testing.T) {
 			},
 		},
 		{
-			name: "object-property-effect-property-must-exist",
-			err: errObjectPropertyEffectPropertyNotFound,
+			name: "object-state-effect-state-must-exist",
+			err: errObjectStateEffectStateNotFound,
 			state: WorldState{
 				zones: []Zone{testZone(t, "zone-one")},
 				objects: []Object{
 					testObject(
 						t, "obj-one", "zone-one",
-						testWithObjectProperty(t, "prop-one", "prop-one-val"),
+						testWithObjectState(t, "state-one", "state-one-val"),
 						testWithObjectAction(VerbUse,
 							testRule(t, []Effect{
-								ObjectPropertyEffect{
+								SetObjectStateEffect{
 									ObjectId: testIdentity(t, "obj-one"),
-									PropertyId: testIdentity(t, "prop-no-exist"),
+									StateId: testIdentity(t, "state-no-exist"),
 								},
 							}),
 						),
@@ -288,10 +288,10 @@ func TestValidateEffects(t *testing.T) {
 			},
 		},
 
-		// SetModeEffect
+		// ActivateModeEffect
 
 		{
-			name: "set-mode-effect-mode-must-exist",
+			name: "activate-mode-effect-mode-must-exist",
 			err: errModeEffectModeNotFound,
 			state: WorldState{
 				zones: []Zone{testZone(t, "zone-one")},
@@ -300,7 +300,7 @@ func TestValidateEffects(t *testing.T) {
 						t, "obj-one", "zone-one",
 						testWithObjectAction(VerbUse,
 							testRule(t, []Effect{
-								SetModeEffect{
+								ActivateModeEffect{
 									ModeId: testIdentity(t, "mode-no-exist"),
 								},
 							}),
@@ -384,10 +384,10 @@ func TestValidateEffects(t *testing.T) {
 func TestValidateConditionGroups(t *testing.T) {
 	runValidateCases(t, validateConditionGroups, []validateCase{
 
-		// PropertyCondition Tests
+		// ObjectStateCondition Tests
 		{
-			name: "property-condition-property-no-exist",
-			err: errPropertyConditionPropertyNotFound,
+			name: "object-state-condition-state-no-exist",
+			err: errObjectStateConditionStateNotFound,
 			state: WorldState{
 				zones: []Zone{testZone(t, "zone-one")},
 				objects: []Object{
@@ -397,7 +397,7 @@ func TestValidateConditionGroups(t *testing.T) {
 							testRule(t, []Effect{SayEffect{""}},
 								testWithConditionGroups(
 									testConditionGroup(t,
-										testWithPropertyCondition(t, "prop-no-exist", ""),
+										testWithObjectStateCondition(t, "state-no-exist", ""),
 									),
 								),
 							),

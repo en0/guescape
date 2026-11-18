@@ -8,7 +8,7 @@ import (
 )
 
 var errEffectObjectNotFound = errors.New("effect references an unknown object")
-var errEffectPropertyNotFound = errors.New("effect references an unknown property")
+var errEffectObjectStateNotFound = errors.New("effect references an unknown object state")
 var errEffectModeNotFound = errors.New("effect references an unknown mode")
 var errEffectStateNotFound = errors.New("effect references an unknown state")
 
@@ -23,8 +23,8 @@ func Apply(ws WorldState, ef Effect) (WorldState, error){
 		ws = applyAddFlagEffect(ws, e)
 	case RemoveFlagEffect:
 		ws = applyRemoveFlagEffect(ws, e)
-	case ObjectPropertyEffect:
-		ws, err = applyObjectPropertyEffect(ws, e)
+	case SetObjectStateEffect:
+		ws, err = applyObjectStateEffect(ws, e)
 	case ObjectVisibleEffect:
 		ws, err = applyObjectVisibleEffect(ws, e)
 	case ObjectTargetableEffect:
@@ -33,7 +33,7 @@ func Apply(ws WorldState, ef Effect) (WorldState, error){
 		ws, err = applyObjectCarriableEffect(ws, e)
 	case ObjectLocationEffect:
 		ws, err = applyObjectLocationEffect(ws, e)
-	case SetModeEffect:
+	case ActivateModeEffect:
 		ws.currentModeId = e.ModeId
 	case ClearModeEffect:
 		ws.currentModeId = Identity{}
@@ -60,17 +60,17 @@ func applyRemoveFlagEffect(ws WorldState, e RemoveFlagEffect) WorldState {
 	return ws
 }
 
-func applyObjectPropertyEffect(ws WorldState, e ObjectPropertyEffect) (WorldState, error) {
+func applyObjectStateEffect(ws WorldState, e SetObjectStateEffect) (WorldState, error) {
 	i := slices.IndexFunc(ws.objects, func(o Object) bool {return o.id == e.ObjectId})
 	if i > -1 {
 		objects := slices.Clone(ws.objects)
-		if objects[i].hasProperty(e.PropertyId) {
-			objects[i].properties = maps.Clone(objects[i].properties)
-			objects[i].properties[e.PropertyId] = e.Value
+		if objects[i].hasState(e.StateId) {
+			objects[i].states = maps.Clone(objects[i].states)
+			objects[i].states[e.StateId] = e.Value
 			ws.objects = objects
 			return ws, nil
 		}
-		return WorldState{}, fmt.Errorf("%w: %v", errEffectPropertyNotFound, e.PropertyId)
+		return WorldState{}, fmt.Errorf("%w: %v", errEffectObjectStateNotFound, e.StateId)
 	}
 	return WorldState{}, fmt.Errorf("%w: %v", errEffectObjectNotFound, e.ObjectId)
 }

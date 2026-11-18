@@ -131,8 +131,8 @@ func loadEffect(b effectBlock) (effect, hcl.Diagnostics) {
 		var v sayEffectBlock
 		d := gohcl.DecodeBody(b.Body, nil, &v)
 		return v, d
-	case "property":
-		var v objectPropertyEffectBlock
+	case "object_state":
+		var v objectStateEffectBlock
 		d := gohcl.DecodeBody(b.Body, nil, &v)
 		return v, d
 	case "object_targetable":
@@ -167,8 +167,8 @@ func loadEffect(b effectBlock) (effect, hcl.Diagnostics) {
 		var v objectLocationEffectBlock
 		d := gohcl.DecodeBody(b.Body, nil, &v)
 		return v, d
-	case "set_mode":
-		var v setModeEffectBlock
+	case "activate_mode":
+		var v activateModeEffectBlock
 		d := gohcl.DecodeBody(b.Body, nil, &v)
 		return v, d
 	case "clear_mode":

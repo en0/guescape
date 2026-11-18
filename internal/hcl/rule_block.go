@@ -37,7 +37,7 @@ func (r ruleBlock) toDomain() (game.Rule, error) {
 // conditionGroupBlock
 
 type conditionGroupBlock struct {
-	PropertyConditions 	[]propertyConditionBlock	`hcl:"property,block"`
+	ObjectStateConditions 	[]objectStateConditionBlock	`hcl:"state,block"`
 	FlagConditions 		[]flagConditionBlock		`hcl:"flag,block"`
 	UseWith 			*string						`hcl:"use_with"`
 }
@@ -45,8 +45,8 @@ type conditionGroupBlock struct {
 func (g conditionGroupBlock) toDomain() (game.ConditionGroup, error) {
 	var errs []error
 
-	var pc []game.PropertyCondition
-	for _, c := range g.PropertyConditions {
+	var pc []game.StateCondition
+	for _, c := range g.ObjectStateConditions {
 		v, err := c.toDomain()
 		if err != nil {errs = append(errs, err); continue}
 		pc = append(pc, v)
@@ -69,16 +69,16 @@ func (g conditionGroupBlock) toDomain() (game.ConditionGroup, error) {
 	return game.NewConditionGroup(useWith, fc, pc), errors.Join(errs...)
 }
 
-// propertyConditionBlock
+// objectStateConditionBlock
 
-type propertyConditionBlock struct {
+type objectStateConditionBlock struct {
 	Id 		string	`hcl:"id,label"`
 	Value 	string	`hcl:"value"`
 }
 
-func (p propertyConditionBlock) toDomain() (game.PropertyCondition, error) {
+func (p objectStateConditionBlock) toDomain() (game.StateCondition, error) {
 	id, err := game.NewIdentity(p.Id)
-	return game.NewPropertyCondition(id, p.Value), err
+	return game.NewStateCondition(id, p.Value), err
 }
 
 // flagConditionBlock

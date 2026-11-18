@@ -62,8 +62,9 @@ func (s *CompiledScript) Run(ctx game.ScriptContext, args []string) ([]game.Effe
 
 	// Register context globals
 	L.SetGlobal("hasFlag", L.NewFunction(lgHasFlag(ctx)))
-	L.SetGlobal("getState", L.NewFunction(lgGetState(ctx)))
-	L.SetGlobal("getProperty", L.NewFunction(lgGetProperty(ctx)))
+	L.SetGlobal("getModeState", L.NewFunction(lgGetModeState(ctx)))
+	L.SetGlobal("get", L.NewFunction(lgGet(ctx)))
+	L.SetGlobal("getObjectState", L.NewFunction(lgGetObjectState(ctx)))
 
 	effects := []game.Effect{}
 
@@ -72,16 +73,17 @@ func (s *CompiledScript) Run(ctx game.ScriptContext, args []string) ([]game.Effe
 	L.SetGlobal("setCurrentZone", L.NewFunction(lgSetCurrentZone(&effects)))
 	L.SetGlobal("addFlag", L.NewFunction(lgAddFlag(&effects)))
 	L.SetGlobal("removeFlag", L.NewFunction(lgRemoveFlag(&effects)))
-	L.SetGlobal("setProperty", L.NewFunction(lgSetProperty(&effects)))
+	L.SetGlobal("setObjectState", L.NewFunction(lgSetObjectState(&effects)))
 	L.SetGlobal("setVisibility", L.NewFunction(lgSetVisibility(&effects)))
 	L.SetGlobal("setTargetable", L.NewFunction(lgSetTargetable(&effects)))
 	L.SetGlobal("setCarriable", L.NewFunction(lgSetCarriable(&effects)))
 	L.SetGlobal("setObjectLocation", L.NewFunction(lgSetObjectLocation(&effects)))
 	L.SetGlobal("endGame", L.NewFunction(lgEndGame(&effects)))
-	L.SetGlobal("setMode", L.NewFunction(lgSetMode(&effects)))
+	L.SetGlobal("activateMode", L.NewFunction(lgActivateMode(&effects)))
 	L.SetGlobal("clearMode", L.NewFunction(lgClearMode(&effects)))
-	L.SetGlobal("setState", L.NewFunction(lgSetState(ctx, &effects)))
+	L.SetGlobal("setModeState", L.NewFunction(lgSetModeState(ctx, &effects)))
 	L.SetGlobal("setPrompt", L.NewFunction(lgSetPrompt(ctx, &effects)))
+	L.SetGlobal("set", L.NewFunction(lgSet(ctx, &effects)))
 
 	// Register args as global table
 	argTable := L.NewTable()
@@ -111,15 +113,22 @@ func lgHasFlag(c game.ScriptContext) lua.LGFunction {
 	}
 }
 
-func lgGetState(c game.ScriptContext) lua.LGFunction {
+func lgGetModeState(c game.ScriptContext) lua.LGFunction {
 	return func(l *lua.LState) int {
 		lv := l.ToString(1)
-		id, err := game.NewIdentity(lv)
+		mid, err := game.NewIdentity(lv)
 		if err != nil {
-			l.RaiseError("getState: invalid identity %q: %v", lv, err)
+			l.RaiseError("getModeState: invalid identity %q: %v", lv, err)
 			return 0
 		}
-		if v, ok := c.ModeState(c.CurrentModeId(), id); ok {
+
+		lv = l.ToString(2)
+		sid, err := game.NewIdentity(lv)
+		if err != nil {
+			l.RaiseError("getModeState: invalid identity %q: %v", lv, err)
+			return 0
+		}
+		if v, ok := c.ModeState(mid, sid); ok {
 			l.Push(lua.LString(v))
 			return 1
 		}
@@ -127,21 +136,21 @@ func lgGetState(c game.ScriptContext) lua.LGFunction {
 	}
 }
 
-func lgGetProperty(c game.ScriptContext) lua.LGFunction {
+func lgGetObjectState(c game.ScriptContext) lua.LGFunction {
 	return func(l *lua.LState) int {
 		lv1 := l.ToString(1)
 		lv2 := l.ToString(2)
 		oid, err := game.NewIdentity(lv1)
 		if err != nil {
-			l.RaiseError("getState: invalid identity %q: %v", lv1, err)
+			l.RaiseError("getObjectState: invalid identity %q: %v", lv1, err)
 			return 0
 		}
 		pid, err := game.NewIdentity(lv2)
 		if err != nil {
-			l.RaiseError("getState: invalid identity %q: %v", lv2, err)
+			l.RaiseError("getObjectState: invalid identity %q: %v", lv2, err)
 			return 0
 		}
-		if v, ok := c.ObjectProperty(oid, pid); ok {
+		if v, ok := c.ObjectState(oid, pid); ok {
 			l.Push(lua.LString(v))
 			return 1
 		}
@@ -200,24 +209,24 @@ func lgRemoveFlag(effects *[]game.Effect) lua.LGFunction {
 	}
 }
 
-func lgSetProperty(effects *[]game.Effect) lua.LGFunction {
+func lgSetObjectState(effects *[]game.Effect) lua.LGFunction {
 	return func(l *lua.LState) int {
 		lv1 := l.ToString(1)
 		lv2 := l.ToString(2)
 		lv3 := l.ToString(3)
 		oid, err := game.NewIdentity(lv1)
 		if err != nil {
-			l.RaiseError("setProperty: invalid identity %q: %v", lv1, err)
+			l.RaiseError("setObjectState: invalid identity %q: %v", lv1, err)
 			return 0
 		}
 		pid, err := game.NewIdentity(lv2)
 		if err != nil {
-			l.RaiseError("setProperty: invalid identity %q: %v", lv2, err)
+			l.RaiseError("setObjectState: invalid identity %q: %v", lv2, err)
 			return 0
 		}
-		e := game.ObjectPropertyEffect{
+		e := game.SetObjectStateEffect{
 			ObjectId: oid,
-			PropertyId: pid,
+			StateId: pid,
 			Value: lv3,
 		}
 		*effects = append(*effects, e)
@@ -300,15 +309,15 @@ func lgEndGame(effects *[]game.Effect) lua.LGFunction {
 	}
 }
 
-func lgSetMode(effects *[]game.Effect) lua.LGFunction {
+func lgActivateMode(effects *[]game.Effect) lua.LGFunction {
 	return func(l *lua.LState) int {
 		lv := l.ToString(1)
 		id, err := game.NewIdentity(lv)
 		if err != nil {
-			l.RaiseError("setMode: invalid identity %q: %v", lv, err)
+			l.RaiseError("activateMode: invalid identity %q: %v", lv, err)
 			return 0
 		}
-		e := game.SetModeEffect{ModeId: id}
+		e := game.ActivateModeEffect{ModeId: id}
 		*effects = append(*effects, e)
 		return 0
 	}
@@ -322,16 +331,24 @@ func lgClearMode(effects *[]game.Effect) lua.LGFunction {
 	}
 }
 
-func lgSetState(ctx game.ScriptContext, effects *[]game.Effect) lua.LGFunction {
+func lgSetModeState(ctx game.ScriptContext, effects *[]game.Effect) lua.LGFunction {
 	return func(l *lua.LState) int {
-		lv1 := l.ToString(1)
-		lv2 := l.ToString(2)
-		sid, err := game.NewIdentity(lv1)
+		lv := l.ToString(1)
+		mid, err := game.NewIdentity(lv)
 		if err != nil {
-			l.RaiseError("setState: invalid identity %q: %v", lv1, err)
+			l.RaiseError("setModeState: invalid identity %q: %v", lv, err)
 			return 0
 		}
-		e := game.SetModeStateEffect{ModeId: ctx.CurrentModeId(), State: sid, Value: lv2}
+
+		lv = l.ToString(2)
+		sid, err := game.NewIdentity(lv)
+		if err != nil {
+			l.RaiseError("setModeState: invalid identity %q: %v", lv, err)
+			return 0
+		}
+
+		lv2 := l.ToString(3)
+		e := game.SetModeStateEffect{ModeId: mid, State: sid, Value: lv2}
 		*effects = append(*effects, e)
 		return 0
 	}
@@ -341,6 +358,37 @@ func lgSetPrompt(ctx game.ScriptContext, effects *[]game.Effect) lua.LGFunction 
 	return func(l *lua.LState) int {
 		lv := l.ToString(1)
 		e := game.SetModePromptEffect{ModeId: ctx.CurrentModeId(), Value: lv}
+		*effects = append(*effects, e)
+		return 0
+	}
+}
+
+func lgGet(c game.ScriptContext) lua.LGFunction {
+	return func(l *lua.LState) int {
+		lv := l.ToString(1)
+		id, err := game.NewIdentity(lv)
+		if err != nil {
+			l.RaiseError("get: invalid identity %q: %v", lv, err)
+			return 0
+		}
+		if v, ok := c.ModeState(c.CurrentModeId(), id); ok {
+			l.Push(lua.LString(v))
+			return 1
+		}
+		return 0
+	}
+}
+
+func lgSet(ctx game.ScriptContext, effects *[]game.Effect) lua.LGFunction {
+	return func(l *lua.LState) int {
+		lv1 := l.ToString(1)
+		lv2 := l.ToString(2)
+		sid, err := game.NewIdentity(lv1)
+		if err != nil {
+			l.RaiseError("set: invalid identity %q: %v", lv1, err)
+			return 0
+		}
+		e := game.SetModeStateEffect{ModeId: ctx.CurrentModeId(), State: sid, Value: lv2}
 		*effects = append(*effects, e)
 		return 0
 	}
